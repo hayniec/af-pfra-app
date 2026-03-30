@@ -9,6 +9,9 @@ import {
   getKeyThresholds,
   formatValue,
   validateEvent,
+  getWalkBracket,
+  getWalkThreshold,
+  getHamrLevel,
 } from './scoring';
 
 const scoringData = rawScoringData as ScoringTable[];
@@ -177,5 +180,96 @@ describe('validateEvent', () => {
   it('includes formatted times in error message for time-based events', () => {
     const err = validateEvent('run', 100);
     expect(err).toContain(':');
+  });
+});
+
+// ---- getWalkBracket ----
+
+describe('getWalkBracket', () => {
+  it('maps <25 and 25-29 to <30', () => {
+    expect(getWalkBracket('<25')).toBe('<30');
+    expect(getWalkBracket('25-29')).toBe('<30');
+  });
+
+  it('maps 30-34 and 35-39 to 30-39', () => {
+    expect(getWalkBracket('30-34')).toBe('30-39');
+    expect(getWalkBracket('35-39')).toBe('30-39');
+  });
+
+  it('maps 40-44 and 45-49 to 40-49', () => {
+    expect(getWalkBracket('40-44')).toBe('40-49');
+    expect(getWalkBracket('45-49')).toBe('40-49');
+  });
+
+  it('maps 50-54 and 55-59 to 50-59', () => {
+    expect(getWalkBracket('50-54')).toBe('50-59');
+    expect(getWalkBracket('55-59')).toBe('50-59');
+  });
+
+  it('maps 60+ to 60+', () => {
+    expect(getWalkBracket('60+')).toBe('60+');
+  });
+});
+
+// ---- getWalkThreshold ----
+
+describe('getWalkThreshold', () => {
+  it('returns male threshold for <25 male', () => {
+    expect(getWalkThreshold('<25', 'male')).toBe(976);
+  });
+
+  it('returns female threshold for <25 female', () => {
+    expect(getWalkThreshold('<25', 'female')).toBe(1042);
+  });
+
+  it('female threshold is always higher than male for same bracket', () => {
+    const brackets = ['<25', '30-34', '40-44', '50-54', '60+'];
+    for (const ag of brackets) {
+      expect(getWalkThreshold(ag, 'female')).toBeGreaterThan(getWalkThreshold(ag, 'male'));
+    }
+  });
+
+  it('returns higher threshold for older age groups (male)', () => {
+    expect(getWalkThreshold('60+', 'male')).toBeGreaterThan(getWalkThreshold('<25', 'male'));
+  });
+});
+
+// ---- getHamrLevel ----
+
+describe('getHamrLevel', () => {
+  it('returns null for 0 shuttles', () => {
+    expect(getHamrLevel(0)).toBeNull();
+  });
+
+  it('returns level 1, shuttle 1 for 1 shuttle', () => {
+    const result = getHamrLevel(1);
+    expect(result).not.toBeNull();
+    expect(result!.level).toBe(1);
+    expect(result!.shuttle).toBe(1);
+  });
+
+  it('returns level 1, last shuttle for 7 shuttles', () => {
+    const result = getHamrLevel(7)!;
+    expect(result.level).toBe(1);
+    expect(result.shuttle).toBe(7);
+    expect(result.totalInLevel).toBe(7);
+  });
+
+  it('returns level 2 for 8 shuttles', () => {
+    expect(getHamrLevel(8)!.level).toBe(2);
+  });
+
+  it('returns level 6, shuttle 1 for 42 shuttles', () => {
+    const result = getHamrLevel(42)!;
+    expect(result.level).toBe(6);
+    expect(result.shuttle).toBe(1);
+  });
+
+  it('returns level 15 for 155 shuttles', () => {
+    expect(getHamrLevel(155)!.level).toBe(15);
+  });
+
+  it('returns level 16 for shuttles beyond level 15', () => {
+    expect(getHamrLevel(200)!.level).toBe(16);
   });
 });

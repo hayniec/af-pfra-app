@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TIME_BASED_EVENTS, validateEvent, formatValue } from '../scoring';
+import { TIME_BASED_EVENTS, validateEvent, formatValue, HAMR_LEVELS } from '../scoring';
 import type { KeyThresholds } from '../types';
 
 export interface EventOption {
@@ -19,6 +19,8 @@ interface EventInputProps {
   thresholds?: KeyThresholds | null;
   valueType?: string;
   score?: number;
+  walkPassFail?: { threshold: number; passed: boolean | null } | null;
+  hamrLevel?: { level: number; shuttle: number; totalInLevel: number } | null;
 }
 
 function TimeInput({
@@ -91,6 +93,8 @@ export function EventInput({
   thresholds,
   valueType,
   score,
+  walkPassFail,
+  hamrLevel,
 }: EventInputProps) {
   const [touched, setTouched] = useState(false);
   const [rawInput, setRawInput] = useState(() => value > 0 ? String(value) : '');
@@ -171,6 +175,34 @@ export function EventInput({
               </span>
             </div>
           )}
+        </div>
+      )}
+
+      {walkPassFail && (
+        <div className="threshold-hint">
+          <div className="threshold-item tier-min">
+            <span className="threshold-label">Pass</span>
+            <span className="threshold-val highlight-min">
+              ≤ {formatValue(walkPassFail.threshold, 'walk')}
+            </span>
+          </div>
+          <div className={`threshold-item threshold-item-you ${walkPassFail.passed === null ? 'tier-none' : walkPassFail.passed ? 'tier-max' : 'tier-fail'}`}>
+            <span className="threshold-label">You</span>
+            <span className={`threshold-val ${walkPassFail.passed === null ? 'score-none' : walkPassFail.passed ? 'highlight-max' : 'score-fail'}`}>
+              {walkPassFail.passed === null ? '—' : walkPassFail.passed ? 'PASS' : 'FAIL'}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {hamrLevel && (
+        <div className="hamr-level-badge">
+          <span className="hamr-level-label">HAMR Level</span>
+          <span className="hamr-level-value">
+            {hamrLevel.level <= HAMR_LEVELS.length
+              ? `${hamrLevel.level} — Shuttle ${hamrLevel.shuttle} / ${hamrLevel.totalInLevel}`
+              : `${hamrLevel.level}+`}
+          </span>
         </div>
       )}
     </div>

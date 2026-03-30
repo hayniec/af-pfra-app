@@ -10,6 +10,8 @@ import {
   getColIdx,
   calculateScore,
   getKeyThresholds,
+  getWalkThreshold,
+  getHamrLevel,
 } from './scoring';
 import { EventInput } from './components/EventInput';
 import type { EventOption } from './components/EventInput';
@@ -23,6 +25,7 @@ function getTable(id: number): ScoringTable | undefined {
 const CARDIO_OPTIONS: EventOption[] = [
   { value: 'run', label: 'Run' },
   { value: 'hamr', label: '20m HAMR' },
+  { value: 'walk', label: '2km Walk' },
 ];
 
 const STRENGTH_OPTIONS: EventOption[] = [
@@ -56,6 +59,7 @@ function App() {
   }, [whtrValue, colIdx]);
 
   const cardioScore = useMemo(() => {
+    if (cardioType === 'walk') return 0;
     const table = getTable(TABLE_MAP[cardioType as keyof typeof TABLE_MAP]);
     return table ? calculateScore(table, colIdx, cardioValue) : 0;
   }, [cardioType, cardioValue, colIdx]);
@@ -70,8 +74,18 @@ function App() {
     return table ? calculateScore(table, colIdx, coreValue) : 0;
   }, [coreType, coreValue, colIdx]);
 
+  const walkPassFail = useMemo(() => {
+    if (cardioType !== 'walk') return null;
+    const threshold = getWalkThreshold(ageGroup, gender);
+    const passed = cardioValue > 0 ? cardioValue <= threshold : null;
+    return { threshold, passed };
+  }, [cardioType, cardioValue, ageGroup, gender]);
+
   const totalScore = Math.round(cardioScore + strengthScore + coreScore + whtrScore);
-  const isPass = totalScore >= PASS_THRESHOLD && cardioScore > 0 && strengthScore > 0 && coreScore > 0;
+  const cardioPass = cardioType === 'walk'
+    ? (walkPassFail?.passed === true)
+    : cardioScore > 0;
+  const isPass = totalScore >= PASS_THRESHOLD && cardioPass && strengthScore > 0 && coreScore > 0;
 
   const whtrThresholds = useMemo(() => {
     const table = getTable(TABLE_MAP.whtr);
@@ -79,9 +93,15 @@ function App() {
   }, [colIdx]);
 
   const cardioThresholds = useMemo(() => {
+    if (cardioType === 'walk') return null;
     const table = getTable(TABLE_MAP[cardioType as keyof typeof TABLE_MAP]);
     return table ? getKeyThresholds(table, colIdx) : null;
   }, [cardioType, colIdx]);
+
+  const hamrLevel = useMemo(() => {
+    if (cardioType !== 'hamr' || cardioValue <= 0) return null;
+    return getHamrLevel(cardioValue);
+  }, [cardioType, cardioValue]);
 
   const strengthThresholds = useMemo(() => {
     const table = getTable(TABLE_MAP[strengthType as keyof typeof TABLE_MAP]);
@@ -160,10 +180,12 @@ function App() {
           onTypeChange={handleCardioTypeChange}
           value={cardioValue}
           onChange={setCardioValue}
-          placeholder="Total Shuttles"
+          placeholder={cardioType === 'hamr' ? 'Total Shuttles' : 'Enter value'}
           thresholds={cardioThresholds}
           valueType={cardioType}
-          score={cardioScore}
+          score={cardioType === 'walk' ? undefined : cardioScore}
+          walkPassFail={walkPassFail}
+          hamrLevel={hamrLevel}
         />
 
         <EventInput

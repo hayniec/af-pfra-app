@@ -19,7 +19,7 @@ export const TABLE_MAP = {
 
 export type EventKey = keyof typeof TABLE_MAP;
 
-export const TIME_BASED_EVENTS: readonly string[] = ['plank', 'run'];
+export const TIME_BASED_EVENTS: readonly string[] = ['plank', 'run', 'walk'];
 
 export const PASS_THRESHOLD = 75;
 
@@ -35,6 +35,7 @@ export const EVENT_RANGES: Record<string, { min: number; max: number }> = {
   situp:       { min: 0,    max: 200  },
   crunches:    { min: 0,    max: 200  },
   plank:       { min: 1,    max: 3600 },  // up to 60:00
+  walk:        { min: 600,  max: 1800 },  // 10:00 – 30:00
 };
 
 /** Default input values. Time-based values are in seconds. */
@@ -47,7 +48,72 @@ export const DEFAULT_VALUES: Record<string, number> = {
   situp:       50,
   crunches:    50,
   plank:       180,   // 3:00
+  walk:        0,     // start empty
 };
+
+// ---- Walk standards (Table 3.1, DAFMAN 36-2905) ----
+// Pass/fail only — times in seconds, isLowerBetter = true
+// Uses 10-year age brackets
+
+export const WALK_STANDARDS: Record<string, { male: number; female: number }> = {
+  '<30':   { male: 976,  female: 1042 }, // 16:16 / 17:22
+  '30-39': { male: 978,  female: 1048 }, // 16:18 / 17:28
+  '40-49': { male: 983,  female: 1069 }, // 16:23 / 17:49
+  '50-59': { male: 1000, female: 1091 }, // 16:40 / 18:11
+  '60+':   { male: 1018, female: 1133 }, // 16:58 / 18:53
+};
+
+export function getWalkBracket(ageGroup: string): string {
+  if (ageGroup === '<25' || ageGroup === '25-29') return '<30';
+  if (ageGroup === '30-34' || ageGroup === '35-39') return '30-39';
+  if (ageGroup === '40-44' || ageGroup === '45-49') return '40-49';
+  if (ageGroup === '50-54' || ageGroup === '55-59') return '50-59';
+  return '60+';
+}
+
+export function getWalkThreshold(ageGroup: string, gender: string): number {
+  const bracket = getWalkBracket(ageGroup);
+  const standard = WALK_STANDARDS[bracket];
+  return gender === 'female' ? standard.female : standard.male;
+}
+
+// ---- HAMR level structure (from official DAF scorecard) ----
+
+export const HAMR_LEVELS = [
+  { level: 1,  start: 1,   end: 7   },
+  { level: 2,  start: 8,   end: 15  },
+  { level: 3,  start: 16,  end: 23  },
+  { level: 4,  start: 24,  end: 32  },
+  { level: 5,  start: 33,  end: 41  },
+  { level: 6,  start: 42,  end: 50  },
+  { level: 7,  start: 51,  end: 60  },
+  { level: 8,  start: 61,  end: 70  },
+  { level: 9,  start: 71,  end: 81  },
+  { level: 10, start: 82,  end: 92  },
+  { level: 11, start: 93,  end: 104 },
+  { level: 12, start: 105, end: 116 },
+  { level: 13, start: 117, end: 129 },
+  { level: 14, start: 130, end: 142 },
+  { level: 15, start: 143, end: 155 },
+] as const;
+
+export function getHamrLevel(shuttles: number): { level: number; shuttle: number; totalInLevel: number } | null {
+  if (shuttles <= 0) return null;
+  for (const lvl of HAMR_LEVELS) {
+    if (shuttles >= lvl.start && shuttles <= lvl.end) {
+      return {
+        level: lvl.level,
+        shuttle: shuttles - lvl.start + 1,
+        totalInLevel: lvl.end - lvl.start + 1,
+      };
+    }
+  }
+  // Beyond level 15
+  const last = HAMR_LEVELS[HAMR_LEVELS.length - 1];
+  return { level: 16, shuttle: shuttles - last.end, totalInLevel: 0 };
+}
+
+// ---- Scoring ----
 
 export function getColIdx(ageGroup: string, gender: string): number {
   const ageIdx = (AGE_GROUPS as readonly string[]).indexOf(ageGroup);
