@@ -15,6 +15,7 @@ import {
   getRunPace,
 } from './scoring';
 import { HamrPlayer } from './components/HamrPlayer';
+import { RunTracker } from './components/RunTracker';
 import { GoalLookup } from './components/GoalLookup';
 import { ScoreHistory } from './components/ScoreHistory';
 import { EventInput } from './components/EventInput';
@@ -223,6 +224,7 @@ function App() {
           paceInfo={runPace}
         />
         {cardioType === 'hamr' && <HamrPlayer />}
+        {cardioType === 'run' && <RunTracker onComplete={(secs) => setCardioValue(secs)} />}
 
         <EventInput
           key={strengthType}
