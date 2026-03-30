@@ -27,7 +27,7 @@ function getTable(id: number): ScoringTable | undefined {
 const CARDIO_OPTIONS: EventOption[] = [
   { value: 'run', label: 'Run' },
   { value: 'hamr', label: '20m HAMR' },
-  { value: 'walk', label: '2km Walk' },
+  { value: 'walk', label: '1.2mi Walk' },
 ];
 
 const STRENGTH_OPTIONS: EventOption[] = [

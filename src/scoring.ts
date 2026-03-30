@@ -175,12 +175,10 @@ export function formatValue(val: number, type: string): string {
   return val.toString();
 }
 
-/** Returns pace per mile and per km for a 2-mile AF run, or null if no time entered. */
-export function getRunPace(totalSeconds: number): { perMile: string; perKm: string } | null {
+/** Returns pace per mile for a 2-mile AF run, or null if no time entered. */
+export function getRunPace(totalSeconds: number): { perMile: string } | null {
   if (totalSeconds <= 0) return null;
-  const perMileS = Math.round(totalSeconds / 2);
-  const perKmS   = Math.round(totalSeconds / 3.21869); // 2 mi = 3.21869 km
-  return { perMile: formatValue(perMileS, 'run'), perKm: formatValue(perKmS, 'run') };
+  return { perMile: formatValue(Math.round(totalSeconds / 2), 'run') };
 }
 
 export function validateEvent(type: string, value: number): string | null {

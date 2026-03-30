@@ -21,7 +21,7 @@ interface EventInputProps {
   score?: number;
   walkPassFail?: { threshold: number; passed: boolean | null } | null;
   hamrLevel?: { level: number; shuttle: number; totalInLevel: number } | null;
-  paceInfo?: { perMile: string; perKm: string } | null;
+  paceInfo?: { perMile: string } | null;
 }
 
 function TimeInput({
@@ -212,8 +212,6 @@ export function EventInput({
         <div className="pace-info">
           <span className="pace-label">Pace</span>
           <span className="pace-item">{paceInfo.perMile}<span className="pace-unit">/mi</span></span>
-          <span className="pace-sep">·</span>
-          <span className="pace-item">{paceInfo.perKm}<span className="pace-unit">/km</span></span>
         </div>
       )}
     </div>
