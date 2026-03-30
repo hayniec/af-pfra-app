@@ -389,6 +389,18 @@ option {
   .component-score {
     font-size: 0.9rem;
   }
+
+  /* Goal table: tighten padding on mobile */
+  .goal-row > span,
+  .goal-total-row > span,
+  .goal-header > span {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .goal-total-pts {
+    font-size: 0.85rem;
+  }
 }
 
 /* Phone — 400px and below */
@@ -810,6 +822,8 @@ option {
   font-weight: 700;
   gap: 0.4rem;
   justify-content: flex-end;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .goal-pass-badge {
@@ -818,6 +832,8 @@ option {
   padding: 0.1rem 0.35rem;
   border-radius: 3px;
   letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .badge-pass {
