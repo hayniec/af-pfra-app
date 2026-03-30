@@ -15,6 +15,7 @@ import {
   getRunPace,
 } from './scoring';
 import { HamrPlayer } from './components/HamrPlayer';
+import { GoalLookup } from './components/GoalLookup';
 import { EventInput } from './components/EventInput';
 import type { EventOption } from './components/EventInput';
 
@@ -253,6 +254,15 @@ function App() {
           </div>
         </div>
       </div>
+
+      <GoalLookup
+        colIdx={colIdx}
+        ageGroup={ageGroup}
+        gender={gender}
+        cardioType={cardioType}
+        strengthType={strengthType}
+        coreType={coreType}
+      />
     </div>
   );
 }

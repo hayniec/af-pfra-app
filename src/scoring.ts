@@ -181,6 +181,20 @@ export function getRunPace(totalSeconds: number): { perMile: string } | null {
   return { perMile: formatValue(Math.round(totalSeconds / 2), 'run') };
 }
 
+/** Reverse of calculateScore: given target points for an event, returns the minimum
+ *  performance value needed to achieve at least that many points. Returns null if
+ *  the target exceeds all available scores in the table. */
+export function getValueForScore(
+  table: ScoringTable,
+  colIdx: number,
+  targetPts: number,
+): number | null {
+  const qualifying = table.rows
+    .filter(r => r.score >= targetPts)
+    .sort((a, b) => a.score - b.score); // ascending — pick lowest qualifying score
+  return qualifying.length > 0 ? qualifying[0].values[colIdx] : null;
+}
+
 export function validateEvent(type: string, value: number): string | null {
   const range = EVENT_RANGES[type];
   if (!range || value === 0) return null;
