@@ -45,5 +45,18 @@ export function useHistory() {
     localStorage.removeItem(STORAGE_KEY);
   };
 
-  return { entries, save, remove, clearAll };
+  const importEntries = (incoming: HistoryEntry[]) => {
+    // Merge: keep existing entries, add incoming ones that don't share an ID
+    const existingIds = new Set(entries.map(e => e.id));
+    const newOnes = incoming.filter(e => !existingIds.has(e.id));
+    if (newOnes.length === 0) return;
+    // Merge and sort newest-first
+    const merged = [...entries, ...newOnes].sort(
+      (a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime()
+    );
+    setEntries(merged);
+    persist(merged);
+  };
+
+  return { entries, save, remove, clearAll, importEntries };
 }

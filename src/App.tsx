@@ -49,7 +49,7 @@ function App() {
   const [gender, setGender] = useState('male');
   const [ageGroup, setAgeGroup] = useState('<25');
   const [savedFeedback, setSavedFeedback] = useState(false);
-  const { entries, save, remove, clearAll } = useHistory();
+  const { entries, save, remove, clearAll, importEntries } = useHistory();
 
   const [whtrValue, setWhtrValue] = useState(DEFAULT_VALUES.whtr);
   const [cardioType, setCardioType] = useState('run');
@@ -293,6 +293,7 @@ function App() {
         entries={entries}
         onRemove={remove}
         onClearAll={clearAll}
+        onImport={importEntries}
       />
     </div>
   );
