@@ -23,6 +23,45 @@ const EVENT_LABELS: Record<string, string> = {
   situp: 'Sit-ups', crunches: 'Crunches', plank: 'Plank',
 };
 
+function exportCSV(entries: HistoryEntry[]) {
+  const headers = [
+    'Date', 'Time', 'Gender', 'Age Group',
+    'Composite Score', 'Result',
+    'WHtR Score',
+    'Cardio Type', 'Cardio Score',
+    'Strength Type', 'Strength Score',
+    'Core Type', 'Core Score',
+  ];
+
+  const rows = entries.map(e => [
+    formatDate(e.savedAt),
+    formatTime(e.savedAt),
+    e.gender === 'male' ? 'Male' : 'Female',
+    e.ageGroup === '<25' ? 'Under 25' : e.ageGroup,
+    e.compositeScore,
+    e.passed ? 'Pass' : 'Fail',
+    e.whtrScore.toFixed(1),
+    EVENT_LABELS[e.cardioType] ?? e.cardioType,
+    e.cardioType === 'walk' ? formatValue(e.cardioValue, 'walk') : e.cardioScore.toFixed(1),
+    EVENT_LABELS[e.strengthType] ?? e.strengthType,
+    e.strengthScore.toFixed(1),
+    EVENT_LABELS[e.coreType] ?? e.coreType,
+    e.coreScore.toFixed(1),
+  ]);
+
+  const csv = [headers, ...rows]
+    .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `pfra-scores-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export function ScoreHistory({ entries, onRemove, onClearAll }: ScoreHistoryProps) {
   if (entries.length === 0) {
     return (
@@ -37,11 +76,16 @@ export function ScoreHistory({ entries, onRemove, onClearAll }: ScoreHistoryProp
     <section className="history-section">
       <div className="history-header">
         <h2 className="section-title">Score History</h2>
-        {entries.length > 1 && (
-          <button className="history-clear-btn" onClick={onClearAll}>
-            Clear All
+        <div className="history-actions">
+          <button className="history-export-btn" onClick={() => exportCSV(entries)}>
+            Export CSV
           </button>
-        )}
+          {entries.length > 1 && (
+            <button className="history-clear-btn" onClick={onClearAll}>
+              Clear All
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="history-list">
