@@ -113,6 +113,18 @@ export function getHamrLevel(shuttles: number): { level: number; shuttle: number
   return { level: 16, shuttle: shuttles - last.end, totalInLevel: 0 };
 }
 
+// ---- HAMR beep timing (20m shuttle run, standard beep-test speeds) ----
+
+const HAMR_SPEEDS_KMH = [
+  8.0, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 12.5, 13.0, 13.5, 14.0, 14.5, 15.0, 15.5,
+] as const;
+
+/** Returns ms between beeps for a given 0-based level index. */
+export function getHamrIntervalMs(levelIdx: number): number {
+  const speed = HAMR_SPEEDS_KMH[Math.min(levelIdx, HAMR_SPEEDS_KMH.length - 1)];
+  return Math.round(72000 / speed); // 20m / (speed km/h in m/s) * 1000
+}
+
 // ---- Scoring ----
 
 export function getColIdx(ageGroup: string, gender: string): number {
@@ -161,6 +173,14 @@ export function formatValue(val: number, type: string): string {
   }
   if (type === 'whtr') return val.toFixed(2);
   return val.toString();
+}
+
+/** Returns pace per mile and per km for a 2-mile AF run, or null if no time entered. */
+export function getRunPace(totalSeconds: number): { perMile: string; perKm: string } | null {
+  if (totalSeconds <= 0) return null;
+  const perMileS = Math.round(totalSeconds / 2);
+  const perKmS   = Math.round(totalSeconds / 3.21869); // 2 mi = 3.21869 km
+  return { perMile: formatValue(perMileS, 'run'), perKm: formatValue(perKmS, 'run') };
 }
 
 export function validateEvent(type: string, value: number): string | null {

@@ -12,7 +12,9 @@ import {
   getKeyThresholds,
   getWalkThreshold,
   getHamrLevel,
+  getRunPace,
 } from './scoring';
+import { HamrPlayer } from './components/HamrPlayer';
 import { EventInput } from './components/EventInput';
 import type { EventOption } from './components/EventInput';
 
@@ -103,6 +105,11 @@ function App() {
     return getHamrLevel(cardioValue);
   }, [cardioType, cardioValue]);
 
+  const runPace = useMemo(() => {
+    if (cardioType !== 'run') return null;
+    return getRunPace(cardioValue);
+  }, [cardioType, cardioValue]);
+
   const strengthThresholds = useMemo(() => {
     const table = getTable(TABLE_MAP[strengthType as keyof typeof TABLE_MAP]);
     return table ? getKeyThresholds(table, colIdx) : null;
@@ -186,7 +193,9 @@ function App() {
           score={cardioType === 'walk' ? undefined : cardioScore}
           walkPassFail={walkPassFail}
           hamrLevel={hamrLevel}
+          paceInfo={runPace}
         />
+        {cardioType === 'hamr' && <HamrPlayer />}
 
         <EventInput
           key={strengthType}

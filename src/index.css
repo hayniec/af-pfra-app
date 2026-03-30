@@ -462,3 +462,187 @@ option {
   font-weight: 600;
   color: var(--accent-blue);
 }
+
+/* =====================
+   RUN PACE DISPLAY
+   ===================== */
+
+.pace-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 0.4rem 0.75rem;
+}
+
+.pace-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 0.2rem;
+}
+
+.pace-item {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.pace-unit {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin-left: 0.1rem;
+}
+
+.pace-sep {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+/* =====================
+   HAMR BEEP PLAYER
+   ===================== */
+
+.hamr-player {
+  margin-top: 1rem;
+  background: rgba(10, 49, 97, 0.25);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+
+.hamr-player-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.hamr-player-title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--accent-blue);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hamr-player-live {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: var(--accent-red);
+  color: #fff;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.hamr-player-stats {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.hamr-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 0.4rem 0.5rem;
+}
+
+.hamr-stat-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.15rem;
+}
+
+.hamr-stat-val {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.1;
+}
+
+.hamr-stat-sub {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.hamr-player-done {
+  font-size: 0.85rem;
+  color: #a7f3d0;
+  text-align: center;
+  margin-bottom: 0.6rem;
+  font-weight: 500;
+}
+
+.hamr-player-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.hamr-btn {
+  flex: 1;
+  padding: 0.55rem 1rem;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.hamr-btn-start {
+  background: var(--accent-blue);
+  color: var(--bg-dark);
+}
+
+.hamr-btn-start:hover {
+  filter: brightness(1.1);
+}
+
+.hamr-btn-stop {
+  background: var(--accent-red);
+  color: #fff;
+}
+
+.hamr-btn-stop:hover {
+  filter: brightness(1.1);
+}
+
+.hamr-btn-reset {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  flex: 0 0 auto;
+  padding: 0.55rem 0.85rem;
+}
+
+.hamr-btn-reset:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-main);
+}
+
+.hamr-player-hint {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-align: center;
+}
