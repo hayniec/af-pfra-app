@@ -93,6 +93,7 @@ export function EventInput({
   score,
 }: EventInputProps) {
   const [touched, setTouched] = useState(false);
+  const [rawInput, setRawInput] = useState(() => value > 0 ? String(value) : '');
   const timeBased = TIME_BASED_EVENTS.includes(selectedType);
   const error = touched ? validateEvent(selectedType, value) : null;
   const labelId = `label-${sectionLabel.toLowerCase().replace(/\W+/g, '-')}`;
@@ -124,10 +125,12 @@ export function EventInput({
         <input
           type="number"
           placeholder={placeholder ?? 'Enter value'}
-          value={value || ''}
+          value={rawInput}
           onChange={(e) => {
             setTouched(true);
-            onChange(Number(e.target.value));
+            setRawInput(e.target.value);
+            const num = Number(e.target.value);
+            onChange(isNaN(num) ? 0 : num);
           }}
           onBlur={() => setTouched(true)}
           aria-label={placeholder}
