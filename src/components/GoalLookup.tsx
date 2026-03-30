@@ -19,18 +19,28 @@ const TIERS = [
 ] as const;
 
 const EVENT_MAX = { whtr: 20, cardio: 50, strength: 15, core: 15 } as const;
+const MAX_OTHERS = EVENT_MAX.cardio + EVENT_MAX.strength + EVENT_MAX.core; // 80
 
-/** Distributes target across events using largest-remainder method so parts sum exactly to target. */
-function distributeTarget(target: number): { whtr: number; cardio: number; strength: number; core: number } {
-  const total = EVENT_MAX.whtr + EVENT_MAX.cardio + EVENT_MAX.strength + EVENT_MAX.core; // 100
-  const keys = ['whtr', 'cardio', 'strength', 'core'] as const;
-  const exact = keys.map(k => (EVENT_MAX[k] / total) * target);
+/**
+ * Distributes `remaining` points across cardio/strength/core proportionally,
+ * using the largest-remainder method so parts sum exactly to `remaining`.
+ * Returns null if remaining exceeds what those three events can provide.
+ */
+function distributeRemaining(
+  remaining: number,
+): { cardio: number; strength: number; core: number } | null {
+  if (remaining > MAX_OTHERS) return null;
+  if (remaining <= 0) return { cardio: 0, strength: 0, core: 0 };
+
+  const keys   = ['cardio', 'strength', 'core'] as const;
+  const maxes  = { cardio: EVENT_MAX.cardio, strength: EVENT_MAX.strength, core: EVENT_MAX.core };
+  const exact  = keys.map(k => (maxes[k] / MAX_OTHERS) * remaining);
   const floors = exact.map(v => Math.floor(v));
-  const remainders = exact.map((v, i) => ({ i, r: v - floors[i] }));
-  const deficit = target - floors.reduce((s, v) => s + v, 0);
-  remainders.sort((a, b) => b.r - a.r);
-  remainders.slice(0, deficit).forEach(({ i }) => { floors[i]++; });
-  return { whtr: floors[0], cardio: floors[1], strength: floors[2], core: floors[3] };
+  const deficit = remaining - floors.reduce((s, v) => s + v, 0);
+  const rems   = exact.map((v, i) => ({ i, r: v - floors[i] }));
+  rems.sort((a, b) => b.r - a.r);
+  rems.slice(0, deficit).forEach(({ i }) => { floors[i]++; });
+  return { cardio: floors[0], strength: floors[1], core: floors[2] };
 }
 
 interface GoalLookupProps {
@@ -40,6 +50,7 @@ interface GoalLookupProps {
   cardioType: string;
   strengthType: string;
   coreType: string;
+  whtrScore: number;
 }
 
 export function GoalLookup({
@@ -49,6 +60,7 @@ export function GoalLookup({
   cardioType,
   strengthType,
   coreType,
+  whtrScore,
 }: GoalLookupProps) {
   const [selectedTier, setSelectedTier] = useState(75);
 
@@ -67,21 +79,22 @@ export function GoalLookup({
     plank:    'Plank',
   };
 
-  const dist        = distributeTarget(selectedTier);
-  const whtrPts     = dist.whtr;
-  const cardioPts   = dist.cardio;
-  const strengthPts = dist.strength;
-  const corePts     = dist.core;
-  const totalPts    = (cardioType === 'walk' ? 0 : cardioPts) + strengthPts + corePts + whtrPts;
+  const remaining = selectedTier - whtrScore;
+  const dist      = distributeRemaining(remaining);
+  const impossible = dist === null;
 
-  const whtrVal     = getTable(TABLE_MAP.whtr) ? getValueForScore(getTable(TABLE_MAP.whtr)!, colIdx, whtrPts) : null;
-  const cardioVal   = cardioType !== 'walk' && getTable(TABLE_MAP[cardioType as keyof typeof TABLE_MAP])
+  const cardioPts   = dist?.cardio   ?? 0;
+  const strengthPts = dist?.strength ?? 0;
+  const corePts     = dist?.core     ?? 0;
+  const totalPts    = whtrScore + (cardioType === 'walk' ? 0 : cardioPts) + strengthPts + corePts;
+
+  const cardioVal   = !impossible && cardioType !== 'walk' && getTable(TABLE_MAP[cardioType as keyof typeof TABLE_MAP])
     ? getValueForScore(getTable(TABLE_MAP[cardioType as keyof typeof TABLE_MAP])!, colIdx, cardioPts)
     : null;
-  const strengthVal = getTable(TABLE_MAP[strengthType as keyof typeof TABLE_MAP])
+  const strengthVal = !impossible && getTable(TABLE_MAP[strengthType as keyof typeof TABLE_MAP])
     ? getValueForScore(getTable(TABLE_MAP[strengthType as keyof typeof TABLE_MAP])!, colIdx, strengthPts)
     : null;
-  const coreVal     = getTable(TABLE_MAP[coreType as keyof typeof TABLE_MAP])
+  const coreVal     = !impossible && getTable(TABLE_MAP[coreType as keyof typeof TABLE_MAP])
     ? getValueForScore(getTable(TABLE_MAP[coreType as keyof typeof TABLE_MAP])!, colIdx, corePts)
     : null;
 
@@ -104,6 +117,13 @@ export function GoalLookup({
         ))}
       </div>
 
+      {impossible && (
+        <p className="goal-impossible-note">
+          Your current WHtR score ({whtrScore} pts) is not enough to reach {selectedTier} —
+          you need at least {selectedTier - MAX_OTHERS} pts from WHtR to make this tier possible.
+        </p>
+      )}
+
       <div className="goal-table">
         <div className="goal-header">
           <span>Event</span>
@@ -111,13 +131,16 @@ export function GoalLookup({
           <span>Points</span>
         </div>
 
-        {/* WHTR */}
-        <div className="goal-row">
-          <span className="goal-event">Waist-to-Height</span>
-          <span className="goal-val highlight-good">
-            {whtrVal != null ? `≤ ${formatValue(whtrVal, 'whtr')}` : '—'}
+        {/* WHtR — anchored to current score */}
+        <div className="goal-row goal-row-anchor">
+          <span className="goal-event">
+            Waist-to-Height
+            <span className="goal-anchor-badge">anchored</span>
           </span>
-          <span className="goal-pts">{whtrPts} pts</span>
+          <span className={`goal-val ${whtrScore > 0 ? 'highlight-good' : 'score-none'}`}>
+            {whtrScore > 0 ? 'current score' : 'not entered'}
+          </span>
+          <span className="goal-pts">{whtrScore} pts</span>
         </div>
 
         {/* Cardio */}
@@ -133,11 +156,11 @@ export function GoalLookup({
           <div className="goal-row">
             <span className="goal-event">{cardioLabel[cardioType] ?? cardioType}</span>
             <span className="goal-val highlight-good">
-              {cardioVal != null
+              {impossible ? '—' : cardioVal != null
                 ? `${getTable(TABLE_MAP[cardioType as keyof typeof TABLE_MAP])?.isLowerBetter ? '≤' : '≥'} ${formatValue(cardioVal, cardioType)}`
                 : '—'}
             </span>
-            <span className="goal-pts">{cardioPts} pts</span>
+            <span className="goal-pts">{impossible ? '—' : `${cardioPts} pts`}</span>
           </div>
         )}
 
@@ -145,29 +168,29 @@ export function GoalLookup({
         <div className="goal-row">
           <span className="goal-event">{strengthLabel[strengthType] ?? strengthType}</span>
           <span className="goal-val highlight-good">
-            {strengthVal != null ? `≥ ${formatValue(strengthVal, strengthType)}` : '—'}
+            {impossible ? '—' : strengthVal != null ? `≥ ${formatValue(strengthVal, strengthType)}` : '—'}
           </span>
-          <span className="goal-pts">{strengthPts} pts</span>
+          <span className="goal-pts">{impossible ? '—' : `${strengthPts} pts`}</span>
         </div>
 
         {/* Core */}
         <div className="goal-row">
           <span className="goal-event">{coreLabel[coreType] ?? coreType}</span>
           <span className="goal-val highlight-good">
-            {coreVal != null
+            {impossible ? '—' : coreVal != null
               ? `${getTable(TABLE_MAP[coreType as keyof typeof TABLE_MAP])?.isLowerBetter ? '≤' : '≥'} ${formatValue(coreVal, coreType)}`
               : '—'}
           </span>
-          <span className="goal-pts">{corePts} pts</span>
+          <span className="goal-pts">{impossible ? '—' : `${corePts} pts`}</span>
         </div>
 
         {/* Total */}
         <div className="goal-total-row">
           <span></span>
           <span className="goal-total-label">Total</span>
-          <span className={`goal-total-pts ${totalPts >= 75 ? 'highlight-min' : 'score-fail'}`}>
-            {totalPts} pts
-            {cardioType !== 'walk' && (
+          <span className={`goal-total-pts ${!impossible && totalPts >= 75 ? 'highlight-min' : 'score-fail'}`}>
+            {impossible ? 'N/A' : `${totalPts} pts`}
+            {!impossible && cardioType !== 'walk' && (
               <span className={`goal-pass-badge ${totalPts >= 75 ? 'badge-pass' : 'badge-fail'}`}>
                 {totalPts >= 75 ? 'PASS' : 'FAIL'}
               </span>
@@ -184,4 +207,3 @@ export function GoalLookup({
     </section>
   );
 }
-

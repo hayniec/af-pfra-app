@@ -286,6 +286,7 @@ function App() {
         cardioType={cardioType}
         strengthType={strengthType}
         coreType={coreType}
+        whtrScore={whtrScore}
       />
 
       <ScoreHistory

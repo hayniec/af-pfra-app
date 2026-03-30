@@ -832,6 +832,35 @@ option {
   text-align: center;
 }
 
+.goal-row-anchor {
+  background: rgba(56, 189, 248, 0.04);
+}
+
+.goal-anchor-badge {
+  display: inline-block;
+  margin-left: 0.4rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--accent-blue);
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 3px;
+  padding: 0.05rem 0.3rem;
+  letter-spacing: 0.4px;
+  vertical-align: middle;
+  text-transform: uppercase;
+}
+
+.goal-impossible-note {
+  font-size: 0.8rem;
+  color: var(--accent-red);
+  background: rgba(248, 113, 113, 0.08);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
 /* =====================
    WHTR INPUT
    ===================== */
