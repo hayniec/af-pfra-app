@@ -18,10 +18,19 @@ const TIERS = [
   { label: 'Max',       score: 100 },
 ] as const;
 
-const EVENT_MAX = { whtr: 20, cardio: 50, strength: 10, core: 20 } as const;
+const EVENT_MAX = { whtr: 20, cardio: 50, strength: 15, core: 15 } as const;
 
-function tierPts(target: number, max: number): number {
-  return Math.min(max, Math.ceil((target / 100) * max));
+/** Distributes target across events using largest-remainder method so parts sum exactly to target. */
+function distributeTarget(target: number): { whtr: number; cardio: number; strength: number; core: number } {
+  const total = EVENT_MAX.whtr + EVENT_MAX.cardio + EVENT_MAX.strength + EVENT_MAX.core; // 100
+  const keys = ['whtr', 'cardio', 'strength', 'core'] as const;
+  const exact = keys.map(k => (EVENT_MAX[k] / total) * target);
+  const floors = exact.map(v => Math.floor(v));
+  const remainders = exact.map((v, i) => ({ i, r: v - floors[i] }));
+  const deficit = target - floors.reduce((s, v) => s + v, 0);
+  remainders.sort((a, b) => b.r - a.r);
+  remainders.slice(0, deficit).forEach(({ i }) => { floors[i]++; });
+  return { whtr: floors[0], cardio: floors[1], strength: floors[2], core: floors[3] };
 }
 
 interface GoalLookupProps {
@@ -58,10 +67,11 @@ export function GoalLookup({
     plank:    'Plank',
   };
 
-  const whtrPts     = tierPts(selectedTier, EVENT_MAX.whtr);
-  const cardioPts   = tierPts(selectedTier, EVENT_MAX.cardio);
-  const strengthPts = tierPts(selectedTier, EVENT_MAX.strength);
-  const corePts     = tierPts(selectedTier, EVENT_MAX.core);
+  const dist        = distributeTarget(selectedTier);
+  const whtrPts     = dist.whtr;
+  const cardioPts   = dist.cardio;
+  const strengthPts = dist.strength;
+  const corePts     = dist.core;
   const totalPts    = (cardioType === 'walk' ? 0 : cardioPts) + strengthPts + corePts + whtrPts;
 
   const whtrVal     = getTable(TABLE_MAP.whtr) ? getValueForScore(getTable(TABLE_MAP.whtr)!, colIdx, whtrPts) : null;
