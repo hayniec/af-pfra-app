@@ -833,6 +833,32 @@ option {
 }
 
 /* =====================
+   WHTR INPUT
+   ===================== */
+
+.whtr-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.whtr-header label {
+  margin-bottom: 0;
+}
+
+.whtr-ratio-display {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0.1rem 0 0.75rem;
+}
+
+.whtr-ratio-value {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+/* =====================
    SAVE RESULTS BUTTON
    ===================== */
 

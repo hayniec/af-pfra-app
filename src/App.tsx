@@ -20,6 +20,7 @@ import { ScoreHistory } from './components/ScoreHistory';
 import { EventInput } from './components/EventInput';
 import type { EventOption } from './components/EventInput';
 import { useHistory } from './hooks/useHistory';
+import { WhtrInput } from './components/WhtrInput';
 
 const scoringData = rawScoringData as ScoringTable[];
 
@@ -188,15 +189,9 @@ function App() {
       <div className="card animate-fade-in delay-2">
         <h3 className="section-title">Assessment Events</h3>
 
-        <EventInput
-          sectionLabel="Waist-To-Height Ratio"
-          maxPts={20}
-          selectedType="whtr"
-          value={whtrValue}
+        <WhtrInput
           onChange={setWhtrValue}
-          placeholder="Ratio (e.g. 0.49)"
           thresholds={whtrThresholds}
-          valueType="whtr"
           score={whtrScore}
         />
 
