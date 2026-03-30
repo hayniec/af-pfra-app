@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { TIME_BASED_EVENTS, validateEvent } from '../scoring';
 
 export interface EventOption {
@@ -73,11 +73,6 @@ export function EventInput({
   const timeBased = TIME_BASED_EVENTS.includes(selectedType);
   const error = touched ? validateEvent(selectedType, value) : null;
   const labelId = `label-${sectionLabel.toLowerCase().replace(/\W+/g, '-')}`;
-
-  // Reset touched state when the event type changes
-  useEffect(() => {
-    setTouched(false);
-  }, [selectedType]);
 
   return (
     <div className="form-group">

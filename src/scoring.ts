@@ -87,11 +87,6 @@ export function getKeyThresholds(table: ScoringTable, colIdx: number): KeyThresh
   };
 }
 
-/** Converts MM.SS decimal input to total seconds (e.g. 13.25 → 805s) */
-export function parseTimeInput(val: number): number {
-  return Math.floor(val) * 60 + Math.round((val % 1) * 100);
-}
-
 export function formatValue(val: number, type: string): string {
   if (TIME_BASED_EVENTS.includes(type)) {
     const mins = Math.floor(val / 60);

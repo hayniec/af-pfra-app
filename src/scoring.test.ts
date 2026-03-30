@@ -7,7 +7,6 @@ import {
   getColIdx,
   calculateScore,
   getKeyThresholds,
-  parseTimeInput,
   formatValue,
   validateEvent,
 } from './scoring';
@@ -44,29 +43,6 @@ describe('getColIdx', () => {
   });
 });
 
-// ---- parseTimeInput ----
-
-describe('parseTimeInput', () => {
-  it('converts 13.25 to 805 seconds', () => {
-    expect(parseTimeInput(13.25)).toBe(805);
-  });
-
-  it('converts 14.00 to 840 seconds', () => {
-    expect(parseTimeInput(14.00)).toBe(840);
-  });
-
-  it('converts 9.30 to 570 seconds', () => {
-    expect(parseTimeInput(9.30)).toBe(570);
-  });
-
-  it('converts 0.00 to 0 seconds', () => {
-    expect(parseTimeInput(0)).toBe(0);
-  });
-
-  it('converts 1.01 to 61 seconds', () => {
-    expect(parseTimeInput(1.01)).toBe(61);
-  });
-});
 
 // ---- formatValue ----
 

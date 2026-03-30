@@ -168,6 +168,7 @@ function App() {
         />
 
         <EventInput
+          key={cardioType}
           sectionLabel="Cardiorespiratory"
           maxPts={50}
           options={CARDIO_OPTIONS}
@@ -179,6 +180,7 @@ function App() {
         />
 
         <EventInput
+          key={strengthType}
           sectionLabel="Upper Body Strength"
           maxPts={15}
           options={STRENGTH_OPTIONS}
@@ -190,6 +192,7 @@ function App() {
         />
 
         <EventInput
+          key={coreType}
           sectionLabel="Core Strength"
           maxPts={15}
           options={CORE_OPTIONS}
