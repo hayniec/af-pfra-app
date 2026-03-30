@@ -831,3 +831,228 @@ option {
   color: var(--text-muted);
   text-align: center;
 }
+
+/* =====================
+   SAVE RESULTS BUTTON
+   ===================== */
+
+.save-btn {
+  display: block;
+  width: 100%;
+  margin-top: 1.25rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--accent-blue);
+  color: var(--bg-dark);
+}
+
+.save-btn:disabled {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.save-btn:not(:disabled):hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.save-btn-saved {
+  background: #34d399 !important;
+  color: var(--bg-dark) !important;
+}
+
+/* =====================
+   SCORE HISTORY
+   ===================== */
+
+.history-section {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.history-header .section-title {
+  margin-bottom: 0;
+}
+
+.history-empty {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.history-clear-btn {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  padding: 0.3rem 0.65rem;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: all 0.15s;
+}
+
+.history-clear-btn:hover {
+  color: var(--accent-red);
+  border-color: var(--accent-red);
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.history-entry {
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  border-left: 3px solid transparent;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--card-border);
+}
+
+.entry-pass {
+  border-left: 3px solid #34d399;
+}
+
+.entry-fail {
+  border-left: 3px solid var(--accent-red);
+}
+
+.history-entry-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.history-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.history-date {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.history-time {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.history-latest-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent-blue);
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  letter-spacing: 0.4px;
+}
+
+.history-delete-btn {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  transition: all 0.15s;
+  line-height: 1;
+}
+
+.history-delete-btn:hover {
+  color: var(--accent-red);
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.history-score-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin-bottom: 0.45rem;
+}
+
+.history-score {
+  display: flex;
+  align-items: baseline;
+  gap: 0.2rem;
+}
+
+.history-score-num {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.history-score-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.history-pass-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.history-delta {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-left: auto;
+}
+
+.delta-up   { color: #34d399; }
+.delta-down { color: var(--accent-red); }
+.delta-neutral { color: var(--text-muted); }
+
+.history-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  align-items: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+}
+
+.history-stat {
+  color: var(--text-main);
+  font-weight: 500;
+}
+
+.history-sep {
+  color: var(--text-muted);
+}
+
+.history-profile {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+}

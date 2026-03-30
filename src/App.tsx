@@ -16,8 +16,10 @@ import {
 } from './scoring';
 import { HamrPlayer } from './components/HamrPlayer';
 import { GoalLookup } from './components/GoalLookup';
+import { ScoreHistory } from './components/ScoreHistory';
 import { EventInput } from './components/EventInput';
 import type { EventOption } from './components/EventInput';
+import { useHistory } from './hooks/useHistory';
 
 const scoringData = rawScoringData as ScoringTable[];
 
@@ -45,6 +47,8 @@ const CORE_OPTIONS: EventOption[] = [
 function App() {
   const [gender, setGender] = useState('male');
   const [ageGroup, setAgeGroup] = useState('<25');
+  const [savedFeedback, setSavedFeedback] = useState(false);
+  const { entries, save, remove, clearAll } = useHistory();
 
   const [whtrValue, setWhtrValue] = useState(DEFAULT_VALUES.whtr);
   const [cardioType, setCardioType] = useState('run');
@@ -134,6 +138,23 @@ function App() {
   const handleCoreTypeChange = (type: string) => {
     setCoreType(type);
     setCoreValue(DEFAULT_VALUES[type]);
+  };
+
+  const canSave = totalScore > 0;
+
+  const handleSave = () => {
+    save({
+      ageGroup, gender,
+      cardioType, cardioValue,
+      strengthType, strengthValue,
+      coreType, coreValue,
+      whtrValue,
+      compositeScore: totalScore,
+      passed: isPass,
+      whtrScore, cardioScore, strengthScore, coreScore,
+    });
+    setSavedFeedback(true);
+    setTimeout(() => setSavedFeedback(false), 2000);
   };
 
   return (
@@ -253,6 +274,14 @@ function App() {
             <span className="component-value">{coreScore.toFixed(1)} / 15</span>
           </div>
         </div>
+
+        <button
+          className={`save-btn ${savedFeedback ? 'save-btn-saved' : ''}`}
+          onClick={handleSave}
+          disabled={!canSave || savedFeedback}
+        >
+          {savedFeedback ? '✓ Saved!' : 'Save Results'}
+        </button>
       </div>
 
       <GoalLookup
@@ -262,6 +291,12 @@ function App() {
         cardioType={cardioType}
         strengthType={strengthType}
         coreType={coreType}
+      />
+
+      <ScoreHistory
+        entries={entries}
+        onRemove={remove}
+        onClearAll={clearAll}
       />
     </div>
   );
