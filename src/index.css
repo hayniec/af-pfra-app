@@ -822,8 +822,6 @@ option {
   font-weight: 700;
   gap: 0.4rem;
   justify-content: flex-end;
-  flex-wrap: wrap;
-  min-width: 0;
 }
 
 .goal-pass-badge {
@@ -832,8 +830,6 @@ option {
   padding: 0.1rem 0.35rem;
   border-radius: 3px;
   letter-spacing: 0.5px;
-  white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .badge-pass {

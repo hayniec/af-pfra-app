@@ -187,14 +187,9 @@ export function GoalLookup({
         {/* Total */}
         <div className="goal-total-row">
           <span></span>
-          <span className="goal-total-label">Total</span>
+          <span className="goal-total-label">Projected Total</span>
           <span className={`goal-total-pts ${!impossible && totalPts >= 75 ? 'highlight-min' : 'score-fail'}`}>
             {impossible ? 'N/A' : `${totalPts} pts`}
-            {!impossible && cardioType !== 'walk' && (
-              <span className={`goal-pass-badge ${totalPts >= 75 ? 'badge-pass' : 'badge-fail'}`}>
-                {totalPts >= 75 ? 'PASS' : 'FAIL'}
-              </span>
-            )}
           </span>
         </div>
       </div>
