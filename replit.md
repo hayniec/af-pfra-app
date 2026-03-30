@@ -30,13 +30,22 @@ A web-based **Physical Fitness Readiness Assessment (PFRA) Calculator** for the 
 
 ## Development
 ```bash
-npm run dev      # Start dev server on port 5000
-npm run build    # Build for production
-npm run test     # Run tests
-npm run lint     # Lint code
+npm run dev           # Start dev server on port 5000
+npm run build         # Build for production
+npm run test          # Run tests
+npm run lint          # Lint code
+npm run sync:android  # Build and sync web assets into Android project
 ```
 
 ## Configuration
 - Dev server: `0.0.0.0:5000` with `allowedHosts: true` for Replit proxy compatibility
-- Base URL: `/` (changed from `/af-pfra-app/` for Replit compatibility)
+- Base URL: `./` (relative paths required for Capacitor Android builds)
 - Deployment: Static site, builds to `dist/`
+
+## Android (Capacitor)
+- App ID: `com.hayniec.afpfra`
+- App Name: `AF PFRA`
+- Web assets dir: `dist/`
+- Android project: `android/` (open in Android Studio to build APK)
+- After code changes, run `npm run sync:android` to update the Android project
+- Requires Android Studio + JDK on your local machine to build the APK

@@ -25,3 +25,8 @@ dist-ssr
 
 # Scratch / dev scripts
 inspect_data.py
+
+# Capacitor Android build outputs
+android/.gradle
+android/app/build
+android/build
