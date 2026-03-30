@@ -195,6 +195,16 @@ function App() {
           score={whtrScore}
         />
 
+        <GoalLookup
+          colIdx={colIdx}
+          ageGroup={ageGroup}
+          gender={gender}
+          cardioType={cardioType}
+          strengthType={strengthType}
+          coreType={coreType}
+          whtrScore={whtrScore}
+        />
+
         <EventInput
           key={cardioType}
           sectionLabel="Cardiorespiratory"
@@ -278,16 +288,6 @@ function App() {
           {savedFeedback ? '✓ Saved!' : 'Save Results'}
         </button>
       </div>
-
-      <GoalLookup
-        colIdx={colIdx}
-        ageGroup={ageGroup}
-        gender={gender}
-        cardioType={cardioType}
-        strengthType={strengthType}
-        coreType={coreType}
-        whtrScore={whtrScore}
-      />
 
       <ScoreHistory
         entries={entries}
