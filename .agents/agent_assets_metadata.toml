@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "My-BQxSE6b3FAYveLTsEX"
+uri = "file://src/assets/app-icon-1024.png"
+type = "image"
+title = "af pfra app icon"
