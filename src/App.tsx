@@ -11,7 +11,6 @@ import {
   calculateScore,
   getKeyThresholds,
 } from './scoring';
-import { TargetCard } from './components/TargetCard';
 import { EventInput } from './components/EventInput';
 import type { EventOption } from './components/EventInput';
 
@@ -56,7 +55,6 @@ function App() {
     return table ? calculateScore(table, colIdx, whtrValue) : 0;
   }, [whtrValue, colIdx]);
 
-  // Time-based event values are stored as seconds; no conversion needed for scoring
   const cardioScore = useMemo(() => {
     const table = getTable(TABLE_MAP[cardioType as keyof typeof TABLE_MAP]);
     return table ? calculateScore(table, colIdx, cardioValue) : 0;
@@ -74,10 +72,6 @@ function App() {
 
   const totalScore = Math.round(cardioScore + strengthScore + coreScore + whtrScore);
   const isPass = totalScore >= PASS_THRESHOLD && cardioScore > 0 && strengthScore > 0 && coreScore > 0;
-
-  const cardioLabel = cardioType === 'run' ? '1.5-Mile Run' : '20m HAMR';
-  const strengthLabel = strengthType === 'pushup' ? 'Push-ups' : 'HR Push-ups';
-  const coreLabel = coreType === 'situp' ? 'Sit-ups' : coreType === 'crunches' ? 'Crunches' : 'Forearm Plank';
 
   const whtrThresholds = useMemo(() => {
     const table = getTable(TABLE_MAP.whtr);
@@ -143,19 +137,6 @@ function App() {
       </div>
 
       <div className="card animate-fade-in delay-2">
-        <h3 className="section-title">Target Goals</h3>
-        <p className="targets-description">
-          Based on your profile and selected events, these are the minimums to pass the component and the targets to achieve max points.
-        </p>
-        <div className="targets-grid">
-          {whtrThresholds && <TargetCard thresholds={whtrThresholds} label="WHtR" maxPts={20} valueType="whtr" />}
-          {cardioThresholds && <TargetCard thresholds={cardioThresholds} label={cardioLabel} maxPts={50} valueType={cardioType} />}
-          {strengthThresholds && <TargetCard thresholds={strengthThresholds} label={strengthLabel} maxPts={15} valueType={strengthType} />}
-          {coreThresholds && <TargetCard thresholds={coreThresholds} label={coreLabel} maxPts={15} valueType={coreType} />}
-        </div>
-      </div>
-
-      <div className="card animate-fade-in delay-3">
         <h3 className="section-title">Assessment Events</h3>
 
         <EventInput
@@ -165,6 +146,8 @@ function App() {
           value={whtrValue}
           onChange={setWhtrValue}
           placeholder="Ratio (e.g. 0.49)"
+          thresholds={whtrThresholds}
+          valueType="whtr"
         />
 
         <EventInput
@@ -177,6 +160,8 @@ function App() {
           value={cardioValue}
           onChange={setCardioValue}
           placeholder="Total Shuttles"
+          thresholds={cardioThresholds}
+          valueType={cardioType}
         />
 
         <EventInput
@@ -189,6 +174,8 @@ function App() {
           value={strengthValue}
           onChange={setStrengthValue}
           placeholder="Repetitions"
+          thresholds={strengthThresholds}
+          valueType={strengthType}
         />
 
         <EventInput
@@ -201,6 +188,8 @@ function App() {
           value={coreValue}
           onChange={setCoreValue}
           placeholder="Repetitions"
+          thresholds={coreThresholds}
+          valueType={coreType}
         />
       </div>
 

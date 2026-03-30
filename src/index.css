@@ -237,123 +237,49 @@ option {
 .delay-2 { animation-delay: 0.2s; }
 .delay-3 { animation-delay: 0.3s; }
 
-/* Target Goals UI */
-.targets-description {
-  color: var(--text-muted);
-  margin-bottom: 1.5rem;
-  font-size: 0.95rem;
+/* Inline threshold hints */
+.threshold-hint {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
 }
 
-.targets-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
-  gap: 1rem;
-}
-
-.target-card {
-  background: rgba(15, 23, 42, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 1rem;
-  text-align: center;
-  transition: all 0.2s ease;
-}
-
-.target-card:hover {
-  background: rgba(15, 23, 42, 0.7);
-  border-color: rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
-}
-
-.target-card h4 {
-  font-family: var(--font-display);
-  color: var(--accent-blue);
-  font-size: 1.1rem;
-  margin-bottom: 0.75rem;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-.range-box {
+.threshold-item {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-}
-
-.range-item {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
+  text-align: center;
   background: rgba(255, 255, 255, 0.03);
-  padding: 0.4rem 0.5rem;
   border-radius: 6px;
+  padding: 0.4rem 0.5rem;
+  gap: 0.15rem;
 }
 
-.range-label {
-  font-size: 0.75rem;
+.threshold-label {
+  font-size: 0.7rem;
   color: var(--text-muted);
   font-weight: 500;
   text-transform: uppercase;
 }
 
-.range-val {
-  font-size: 0.9rem;
+.threshold-val {
+  font-size: 0.85rem;
   font-weight: 600;
-  font-family: var(--font-sans);
 }
 
-.highlight-max {
-  color: #a7f3d0; /* emerald green for max */
-}
-
-.highlight-good {
-  color: #93c5fd; /* sky blue for good */
-}
-
-.highlight-min {
-  color: #fcd34d; /* amber for passing minimum */
-}
-
-/* Target card header row with event name + point value */
-.target-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.75rem;
-}
-
-.target-card-header h4 {
-  font-family: var(--font-display);
-  color: var(--accent-blue);
-  font-size: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 0;
-}
-
-.target-max-pts {
-  font-size: 0.7rem;
-  font-weight: 600;
+.threshold-pts {
+  font-size: 0.65rem;
   color: var(--text-muted);
-  background: rgba(255,255,255,0.06);
-  padding: 0.2rem 0.4rem;
-  border-radius: 4px;
-  letter-spacing: 0.5px;
 }
 
-/* Points label in range rows */
-.range-pts {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  font-weight: 500;
-  min-width: 36px;
-  text-align: right;
-}
+.highlight-max  { color: #a7f3d0; }
+.highlight-good { color: #93c5fd; }
+.highlight-min  { color: #fcd34d; }
 
-/* Row tier accents */
-.tier-max { border-left: 2px solid #a7f3d0; }
+.tier-max  { border-left: 2px solid #a7f3d0; }
 .tier-good { border-left: 2px solid #93c5fd; }
-.tier-min { border-left: 2px solid #fcd34d; }
+.tier-min  { border-left: 2px solid #fcd34d; }
 
 /* Toggle group bottom margin utility */
 .toggle-group-mb {
@@ -413,31 +339,6 @@ option {
 
   .section-title {
     font-size: 1.2rem;
-  }
-
-  /* Target Goals: 2-column grid on tablet */
-  .targets-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .target-card {
-    padding: 0.75rem;
-  }
-
-  .target-card-header h4 {
-    font-size: 0.85rem;
-  }
-
-  .target-max-pts {
-    font-size: 0.65rem;
-  }
-
-  .range-label {
-    font-size: 0.7rem;
-  }
-
-  .range-val {
-    font-size: 0.82rem;
   }
 
   /* Toggle buttons: allow wrapping on small screens */

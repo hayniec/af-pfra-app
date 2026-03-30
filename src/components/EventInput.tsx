@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { TIME_BASED_EVENTS, validateEvent } from '../scoring';
+import { TIME_BASED_EVENTS, validateEvent, formatValue } from '../scoring';
+import type { KeyThresholds } from '../types';
 
 export interface EventOption {
   value: string;
@@ -15,6 +16,8 @@ interface EventInputProps {
   value: number;
   onChange: (val: number) => void;
   placeholder?: string;
+  thresholds?: KeyThresholds | null;
+  valueType?: string;
 }
 
 function TimeInput({
@@ -68,6 +71,8 @@ export function EventInput({
   value,
   onChange,
   placeholder,
+  thresholds,
+  valueType,
 }: EventInputProps) {
   const [touched, setTouched] = useState(false);
   const timeBased = TIME_BASED_EVENTS.includes(selectedType);
@@ -117,6 +122,26 @@ export function EventInput({
         <p className="input-error" role="alert">
           {error}
         </p>
+      )}
+
+      {thresholds && valueType && (
+        <div className="threshold-hint">
+          {(
+            [
+              { key: 'max',  label: 'Max',  cls: 'tier-max',  color: 'highlight-max',  data: thresholds.max  },
+              { key: 'good', label: 'Good', cls: 'tier-good', color: 'highlight-good', data: thresholds.good },
+              { key: 'min',  label: 'Pass', cls: 'tier-min',  color: 'highlight-min',  data: thresholds.min  },
+            ] as const
+          ).map(({ key, label, cls, color, data }) => (
+            <div key={key} className={`threshold-item ${cls}`}>
+              <span className="threshold-label">{label}</span>
+              <span className={`threshold-val ${color}`}>
+                {thresholds.isLowerBetter ? '≤' : '≥'} {formatValue(data.val, valueType)}
+              </span>
+              <span className="threshold-pts">{data.pts} pts</span>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
