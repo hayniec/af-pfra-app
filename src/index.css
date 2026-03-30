@@ -280,6 +280,15 @@ option {
 .tier-max  { border-left: 2px solid #a7f3d0; }
 .tier-good { border-left: 2px solid #93c5fd; }
 .tier-min  { border-left: 2px solid #fcd34d; }
+.tier-fail { border-left: 2px solid var(--accent-red); }
+.tier-none { border-left: 2px solid rgba(255,255,255,0.1); }
+
+.score-fail { color: var(--accent-red); }
+.score-none { color: var(--text-muted); }
+
+.threshold-item-you {
+  background: rgba(255, 255, 255, 0.06);
+}
 
 /* Toggle group bottom margin utility */
 .toggle-group-mb {

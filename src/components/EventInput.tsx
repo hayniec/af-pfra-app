@@ -18,6 +18,7 @@ interface EventInputProps {
   placeholder?: string;
   thresholds?: KeyThresholds | null;
   valueType?: string;
+  score?: number;
 }
 
 function TimeInput({
@@ -62,6 +63,22 @@ function TimeInput({
   );
 }
 
+function scoreColorClass(score: number, thresholds: KeyThresholds): string {
+  if (score <= 0) return 'score-none';
+  if (score >= thresholds.max.pts)  return 'highlight-max';
+  if (score >= thresholds.good.pts) return 'highlight-good';
+  if (score >= thresholds.min.pts)  return 'highlight-min';
+  return 'score-fail';
+}
+
+function scoreTierClass(score: number, thresholds: KeyThresholds): string {
+  if (score <= 0) return 'tier-none';
+  if (score >= thresholds.max.pts)  return 'tier-max';
+  if (score >= thresholds.good.pts) return 'tier-good';
+  if (score >= thresholds.min.pts)  return 'tier-min';
+  return 'tier-fail';
+}
+
 export function EventInput({
   sectionLabel,
   maxPts,
@@ -73,6 +90,7 @@ export function EventInput({
   placeholder,
   thresholds,
   valueType,
+  score,
 }: EventInputProps) {
   const [touched, setTouched] = useState(false);
   const timeBased = TIME_BASED_EVENTS.includes(selectedType);
@@ -141,6 +159,15 @@ export function EventInput({
               <span className="threshold-pts">{data.pts} pts</span>
             </div>
           ))}
+
+          {score !== undefined && (
+            <div className={`threshold-item threshold-item-you ${scoreTierClass(score, thresholds)}`}>
+              <span className="threshold-label">You</span>
+              <span className={`threshold-val ${scoreColorClass(score, thresholds)}`}>
+                {score > 0 ? `${score} pts` : '—'}
+              </span>
+            </div>
+          )}
         </div>
       )}
     </div>

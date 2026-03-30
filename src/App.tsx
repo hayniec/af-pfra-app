@@ -148,6 +148,7 @@ function App() {
           placeholder="Ratio (e.g. 0.49)"
           thresholds={whtrThresholds}
           valueType="whtr"
+          score={whtrScore}
         />
 
         <EventInput
@@ -162,6 +163,7 @@ function App() {
           placeholder="Total Shuttles"
           thresholds={cardioThresholds}
           valueType={cardioType}
+          score={cardioScore}
         />
 
         <EventInput
@@ -176,6 +178,7 @@ function App() {
           placeholder="Repetitions"
           thresholds={strengthThresholds}
           valueType={strengthType}
+          score={strengthScore}
         />
 
         <EventInput
@@ -190,6 +193,7 @@ function App() {
           placeholder="Repetitions"
           thresholds={coreThresholds}
           valueType={coreType}
+          score={coreScore}
         />
       </div>
 
