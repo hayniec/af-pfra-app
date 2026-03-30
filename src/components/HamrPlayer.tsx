@@ -37,11 +37,11 @@ export function HamrPlayer() {
     const ctx = getCtx();
     const t = ctx.currentTime;
     if (isLevelEnd) {
-      scheduleBeep(ctx, t,        1047, 0.07);
-      scheduleBeep(ctx, t + 0.13, 1047, 0.07);
-      scheduleBeep(ctx, t + 0.26, 1047, 0.07);
+      scheduleBeep(ctx, t,        1047, 0.25);
+      scheduleBeep(ctx, t + 0.35, 1047, 0.25);
+      scheduleBeep(ctx, t + 0.70, 1047, 0.25);
     } else {
-      scheduleBeep(ctx, t, 880, 0.06);
+      scheduleBeep(ctx, t, 880, 0.20);
     }
   };
 
