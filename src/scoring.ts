@@ -25,6 +25,30 @@ export const PASS_THRESHOLD = 75;
 
 const GOOD_TIER_RATIO = 0.8;
 
+/** Valid input ranges. Time-based values are in seconds. */
+export const EVENT_RANGES: Record<string, { min: number; max: number }> = {
+  whtr:        { min: 0.30, max: 0.80 },
+  run:         { min: 360,  max: 2400 },  // 6:00 – 40:00
+  hamr:        { min: 1,    max: 400  },
+  pushup:      { min: 0,    max: 200  },
+  handrelease: { min: 0,    max: 200  },
+  situp:       { min: 0,    max: 200  },
+  crunches:    { min: 0,    max: 200  },
+  plank:       { min: 1,    max: 3600 },  // up to 60:00
+};
+
+/** Default input values. Time-based values are in seconds. */
+export const DEFAULT_VALUES: Record<string, number> = {
+  whtr:        0.50,
+  run:         840,   // 14:00
+  hamr:        50,
+  pushup:      45,
+  handrelease: 35,
+  situp:       50,
+  crunches:    50,
+  plank:       180,   // 3:00
+};
+
 export function getColIdx(ageGroup: string, gender: string): number {
   const ageIdx = (AGE_GROUPS as readonly string[]).indexOf(ageGroup);
   return Math.max(0, ageIdx) * 2 + (gender === 'female' ? 1 : 0);
@@ -76,4 +100,18 @@ export function formatValue(val: number, type: string): string {
   }
   if (type === 'whtr') return val.toFixed(2);
   return val.toString();
+}
+
+export function validateEvent(type: string, value: number): string | null {
+  const range = EVENT_RANGES[type];
+  if (!range || value === 0) return null;
+  if (value < range.min || value > range.max) {
+    if (TIME_BASED_EVENTS.includes(type)) {
+      const fmtMin = formatValue(range.min, type);
+      const fmtMax = formatValue(range.max, type);
+      return `Must be between ${fmtMin} and ${fmtMax}`;
+    }
+    return `Must be between ${range.min} and ${range.max}`;
+  }
+  return null;
 }

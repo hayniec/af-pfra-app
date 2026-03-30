@@ -55,7 +55,7 @@ header {
 
 header h1 {
   font-family: var(--font-display);
-  font-size: 3rem;
+  font-size: clamp(1.75rem, 6vw, 3rem);
   color: var(--text-main);
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -133,7 +133,7 @@ option {
 
 .section-title {
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: clamp(1.15rem, 3vw, 1.5rem);
   margin-bottom: 1rem;
   color: var(--accent-blue);
   border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -151,13 +151,13 @@ option {
 
 .score-display h2 {
   font-family: var(--font-display);
-  font-size: 4rem;
+  font-size: clamp(2.5rem, 10vw, 4rem);
   margin: 0;
   line-height: 1;
 }
 
 .score-status {
-  font-size: 1.5rem;
+  font-size: clamp(1rem, 4vw, 1.5rem);
   font-weight: 600;
   margin-top: 0.5rem;
   text-transform: uppercase;
@@ -392,7 +392,6 @@ option {
   }
 
   header h1 {
-    font-size: 2rem;
     letter-spacing: 0;
   }
 
@@ -464,12 +463,7 @@ option {
     padding: 1.5rem 1rem;
   }
 
-  .score-display h2 {
-    font-size: 3rem;
-  }
-
   .score-status {
-    font-size: 1rem;
     letter-spacing: 1px;
   }
 
@@ -484,21 +478,48 @@ option {
 
 /* Phone — 400px and below */
 @media (max-width: 400px) {
-  header h1 {
-    font-size: 1.6rem;
-  }
-
   /* Target Goals: 1 column on very small phones */
   .targets-grid {
     grid-template-columns: 1fr;
-  }
-
-  .score-display h2 {
-    font-size: 2.5rem;
   }
 
   .toggle-btn {
     font-size: 0.8rem;
     padding: 0.45rem 0.5rem;
   }
+}
+
+/* =====================
+   TIME INPUT
+   ===================== */
+
+.time-input-group {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.time-input-group input {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+.time-sep {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+/* =====================
+   VALIDATION ERROR
+   ===================== */
+
+.input-error {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--accent-red);
+  font-weight: 500;
 }
