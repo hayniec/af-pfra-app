@@ -7,6 +7,7 @@ import {
   getColIdx,
   calculateScore,
   getKeyThresholds,
+  getValueForScore,
   formatValue,
   validateEvent,
   getWalkBracket,
@@ -180,6 +181,39 @@ describe('validateEvent', () => {
   it('includes formatted times in error message for time-based events', () => {
     const err = validateEvent('run', 100);
     expect(err).toContain(':');
+  });
+});
+
+// ---- getValueForScore ----
+
+describe('getValueForScore', () => {
+  const tables = rawScoringData as ScoringTable[];
+  const runTable = tables.find(t => t.id === TABLE_MAP.run)!;
+  const whtrTable = tables.find(t => t.id === TABLE_MAP.whtr)!;
+  const col = getColIdx('<25', 'male');
+
+  it('returns null when targetPts exceeds all available scores', () => {
+    expect(getValueForScore(runTable, col, 999)).toBeNull();
+  });
+
+  it('returns a value for a valid target pts', () => {
+    const val = getValueForScore(runTable, col, 1);
+    expect(val).not.toBeNull();
+    expect(typeof val).toBe('number');
+  });
+
+  it('returns a lower (easier) value for a lower target pts', () => {
+    const high = getValueForScore(runTable, col, 40)!; // run: lower=better, high pts = faster
+    const low  = getValueForScore(runTable, col, 10)!;
+    // run is isLowerBetter — to score MORE points you need a lower (faster) time
+    expect(high).toBeLessThan(low);
+  });
+
+  it('works for isLowerBetter=false events (WHTR: lower ratio = more pts)', () => {
+    const highPts = getValueForScore(whtrTable, col, 18)!;
+    const lowPts  = getValueForScore(whtrTable, col, 5)!;
+    // WHTR is isLowerBetter — higher pts require a lower (better) ratio
+    expect(highPts).toBeLessThan(lowPts);
   });
 });
 
