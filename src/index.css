@@ -168,6 +168,11 @@ option {
   color: #a7f3d0;
 }
 
+.status-excellent {
+  color: #6ee7b7;
+  font-weight: 700;
+}
+
 .status-fail {
   color: #fecaca;
 }

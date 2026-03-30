@@ -248,8 +248,8 @@ function App() {
       <div className="score-display animate-fade-in delay-3" aria-live="polite">
         <p className="score-label">Composite Score</p>
         <h2>{totalScore.toFixed(1)}</h2>
-        <div className={`score-status ${isPass ? 'status-pass' : 'status-fail'}`}>
-          {isPass ? 'Satisfactory / Excellent' : 'Unsatisfactory'}
+        <div className={`score-status ${isPass ? (totalScore >= 90 ? 'status-excellent' : 'status-pass') : 'status-fail'}`}>
+          {isPass ? (totalScore >= 90 ? 'Excellent' : 'Satisfactory') : 'Unsatisfactory'}
         </div>
         <div className="score-breakdown">
           <div className="component-score">
