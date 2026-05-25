@@ -24,6 +24,9 @@ android {
         versionCode 1
         versionName "1.0"
     }
+    buildFeatures {
+        resValues true
+    }
     lintOptions {
         abortOnError false
     }
@@ -36,9 +39,6 @@ android {
 repositories {
     google()
     mavenCentral()
-    flatDir{
-        dirs 'src/main/libs', 'libs'
-    }
 }
 
 dependencies {

@@ -97,20 +97,74 @@ describe('calculateScore — WHtR (lower is better)', () => {
 
 // ---- calculateScore (Push-ups — higher is better) ----
 
+// ---- calculateScore (Push-ups — higher is better) ----
+
 describe('calculateScore — push-ups (higher is better)', () => {
   const table = getTable(TABLE_MAP.pushup);
-  const colIdxMale = getColIdx('<25', 'male');
-  const colIdxFemale = getColIdx('<25', 'female');
+  const colIdxMaleUnder25 = getColIdx('<25', 'male');
+  const colIdxFemaleUnder25 = getColIdx('<25', 'female');
 
   it('returns 0 pts for 0 reps', () => {
-    expect(calculateScore(table, colIdxMale, 0)).toBe(0);
+    expect(calculateScore(table, colIdxMaleUnder25, 0)).toBe(0);
   });
 
-  it('scores differ between male and female for same rep count', () => {
-    const maleScore = calculateScore(table, colIdxMale, 20);
-    const femaleScore = calculateScore(table, colIdxFemale, 20);
-    // Female thresholds are lower so same reps should yield >= male score
-    expect(femaleScore).toBeGreaterThanOrEqual(maleScore);
+  it('returns 15.0 pts for 67 reps (male, <25)', () => {
+    expect(calculateScore(table, colIdxMaleUnder25, 67)).toBe(15.0);
+  });
+
+  it('returns 2.5 pts for 30 reps (male, <25)', () => {
+    expect(calculateScore(table, colIdxMaleUnder25, 30)).toBe(2.5);
+  });
+
+  it('returns 0 pts for 29 reps (male, <25)', () => {
+    expect(calculateScore(table, colIdxMaleUnder25, 29)).toBe(0);
+  });
+
+  it('returns 15.0 pts for 50 reps (female, <25)', () => {
+    expect(calculateScore(table, colIdxFemaleUnder25, 50)).toBe(15.0);
+  });
+
+  it('returns 2.5 pts for 15 reps (female, <25)', () => {
+    expect(calculateScore(table, colIdxFemaleUnder25, 15)).toBe(2.5);
+  });
+});
+
+describe('calculateScore — Forearm Plank', () => {
+  const table = getTable(TABLE_MAP.plank);
+  const colIdxFemale30 = getColIdx('30-34', 'female');
+
+  it('returns 15.0 pts for 3:25 (205 seconds) (female, 30-34)', () => {
+    expect(calculateScore(table, colIdxFemale30, 205)).toBe(15.0);
+  });
+
+  it('returns 2.5 pts for 1:20 (80 seconds) (female, 30-34)', () => {
+    expect(calculateScore(table, colIdxFemale30, 80)).toBe(2.5);
+  });
+});
+
+describe('calculateScore — 2 Mile Run', () => {
+  const table = getTable(TABLE_MAP.run);
+  const colIdxMale30 = getColIdx('30-34', 'male');
+
+  it('returns 50.0 pts for 13:42 (822 seconds) (male, 30-34)', () => {
+    expect(calculateScore(table, colIdxMale30, 822)).toBe(50.0);
+  });
+
+  it('returns 35.0 pts for 20:44 (1244 seconds) (male, 30-34)', () => {
+    expect(calculateScore(table, colIdxMale30, 1244)).toBe(35.0);
+  });
+});
+
+describe('calculateScore — 20m HAMR', () => {
+  const table = getTable(TABLE_MAP.hamr);
+  const colIdxFemale40 = getColIdx('40-44', 'female');
+
+  it('returns 50.0 pts for 59 shuttles (female, 40-44)', () => {
+    expect(calculateScore(table, colIdxFemale40, 59)).toBe(50.0);
+  });
+
+  it('returns 35.0 pts for 17 shuttles (female, 40-44)', () => {
+    expect(calculateScore(table, colIdxFemale40, 17)).toBe(35.0);
   });
 });
 

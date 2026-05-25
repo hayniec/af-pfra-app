@@ -8,10 +8,10 @@ export type AgeGroup = (typeof AGE_GROUPS)[number];
 
 export const TABLE_MAP = {
   whtr: 0,
-  crunches: 1,
-  pushup: 2,
-  handrelease: 3,
-  situp: 4,
+  pushup: 1,
+  handrelease: 2,
+  situp: 3,
+  crunches: 4,
   plank: 5,
   run: 6,
   hamr: 7,
