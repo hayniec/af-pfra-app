@@ -401,6 +401,17 @@ option {
   .goal-total-pts {
     font-size: 0.85rem;
   }
+
+  .goal-lookup {
+    padding: 0.75rem 0;
+    background: transparent;
+    border: none;
+    margin-top: 1rem;
+  }
+
+  .goal-table {
+    grid-template-columns: 1.2fr 1fr 0.8fr;
+  }
 }
 
 /* Phone — 400px and below */
@@ -776,7 +787,8 @@ option {
 
 .goal-val {
   font-weight: 600;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .goal-pts {
@@ -809,6 +821,7 @@ option {
 }
 
 .goal-total-label {
+  grid-column: span 2;
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
