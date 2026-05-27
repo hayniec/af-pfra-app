@@ -45,6 +45,10 @@ body {
   max-width: 800px;
   margin: 0 auto;
   padding: 2rem;
+  padding-top: calc(2rem + env(safe-area-inset-top));
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+  padding-left: calc(1.5rem + env(safe-area-inset-left));
+  padding-right: calc(1.5rem + env(safe-area-inset-right));
   width: 100%;
 }
 
@@ -325,6 +329,8 @@ option {
 @media (max-width: 640px) {
   .container {
     padding: 1rem;
+    padding-top: calc(1rem + env(safe-area-inset-top));
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
   }
 
   header {
@@ -340,7 +346,7 @@ option {
   }
 
   .card {
-    padding: 1.25rem;
+    padding: 1rem 0.75rem;
     border-radius: 12px;
     margin-bottom: 1rem;
   }
@@ -410,7 +416,7 @@ option {
   }
 
   .goal-table {
-    grid-template-columns: 1.2fr 1fr 0.8fr;
+    grid-template-columns: 1.1fr 1.1fr 85px;
   }
 }
 
@@ -783,12 +789,15 @@ option {
 
 .goal-event {
   color: var(--text-main);
+  word-break: break-word;
+  line-height: 1.2;
 }
 
 .goal-val {
   font-weight: 600;
   white-space: normal;
   word-break: break-word;
+  line-height: 1.2;
 }
 
 .goal-pts {
@@ -869,6 +878,7 @@ option {
 .goal-anchor-badge {
   display: inline-block;
   margin-left: 0.4rem;
+  margin-top: 0.2rem;
   font-size: 0.62rem;
   font-weight: 600;
   color: var(--accent-blue);

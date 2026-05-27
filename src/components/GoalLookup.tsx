@@ -134,8 +134,25 @@ export function GoalLookup({
         {/* WHtR — anchored to current score */}
         <div className="goal-row goal-row-anchor">
           <span className="goal-event">
-            Waist-to-Height
-            <span className="goal-anchor-badge">anchored</span>
+            WHtR
+            <span className="goal-anchor-badge" style={{ padding: '0.1rem 0.2rem', marginLeft: '4px' }}>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ verticalAlign: 'middle' }}
+              >
+                <path d="M12 22V8"/>
+                <path d="M5 12H2a10 10 0 0 0 20 0h-3"/>
+                <circle cx="12" cy="5" r="3"/>
+              </svg>
+            </span>
           </span>
           <span className={`goal-val ${whtrScore > 0 ? 'highlight-good' : 'score-none'}`}>
             {whtrScore > 0 ? 'current score' : 'not entered'}
