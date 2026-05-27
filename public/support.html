@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Air Force PFRA Calculator - Support & Landing Page</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0D1B2A;
+      --card-bg: #1B263B;
+      --accent-blue: #38BDF8;
+      --text-main: #E0E1DD;
+      --text-muted: #8E9AAF;
+      --border-color: rgba(56, 189, 248, 0.15);
+      --font-display: 'Outfit', sans-serif;
+      --font-sans: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem;
+    }
+
+    header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    .app-icon {
+      width: 120px;
+      height: 120px;
+      border-radius: 28px;
+      box-shadow: 0 10px 25px rgba(56, 189, 248, 0.2);
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--border-color);
+    }
+
+    h1 {
+      font-family: var(--font-display);
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.5px;
+    }
+
+    h1 span {
+      color: var(--accent-blue);
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 2rem auto;
+      font-weight: 300;
+    }
+
+    .store-badges {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .badge-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.75rem 1.5rem;
+      color: #fff;
+      text-decoration: none;
+      font-family: var(--font-display);
+      transition: all 0.2s;
+    }
+
+    .badge-btn:hover {
+      border-color: var(--accent-blue);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(56, 189, 248, 0.1);
+    }
+
+    .badge-text {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      line-height: 1.2;
+    }
+
+    .badge-sub {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    /* Features Section */
+    .features-title {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      text-align: center;
+      margin-bottom: 2.5rem;
+      color: #fff;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 5rem;
+    }
+
+    .feature-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 2rem;
+      transition: transform 0.2s;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .feature-icon {
+      font-size: 2rem;
+      color: var(--accent-blue);
+      margin-bottom: 1rem;
+    }
+
+    .feature-name {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 0.5rem;
+    }
+
+    .feature-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      font-weight: 300;
+    }
+
+    /* Support Section */
+    .support-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 3rem;
+      text-align: center;
+      margin-bottom: 5rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .support-title {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      color: #fff;
+      margin-bottom: 1rem;
+    }
+
+    .support-desc {
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 2rem auto;
+      font-weight: 300;
+    }
+
+    .support-email {
+      display: inline-block;
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      color: var(--accent-blue);
+      font-weight: 600;
+      text-decoration: none;
+      border-bottom: 2px solid transparent;
+      transition: border-color 0.2s;
+    }
+
+    .support-email:hover {
+      border-color: var(--accent-blue);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      border-top: 1px solid var(--border-color);
+      padding-top: 2rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: var(--accent-blue);
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 2.2rem;
+      }
+      .support-section {
+        padding: 2rem 1.5rem;
+      }
+      .support-email {
+        font-size: 1.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <!-- Reference the generated logo -->
+      <img src="icon-512.png" alt="Air Force PFRA Calculator Icon" class="app-icon">
+      <h1>Air Force <span>PFRA</span> Calculator</h1>
+      <p class="subtitle">Quickly compute your USAF Physical Fitness Readiness Assessment score. Local, secure, and compliant with the latest March 2026 standards.</p>
+      
+      <div class="store-badges">
+        <a href="#" class="badge-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="feature-icon" style="margin-bottom: 0;">
+            <path d="M17.5 12c0-2.76 2.24-5 5-5 .07 0 .14 0 .2.01C21.75 3.1 18.06 1 14 1 8.5 1 4 5.5 4 11c0 5.25 4.07 9.57 9.25 9.97.05.01.1.03.15.03 4.15 0 7.82-2.13 9.6-5.32-.07 0-.13.01-.2.01-2.76 0-5-2.24-5-5zM14 0c1.07 0 2.1-.2 3.07-.56C15.82-2.12 13-4 9.5-4c-4.42 0-8 3.58-8 8 0 .42.04.83.1 1.23C3.04-1.12 8.08 0 14 0z"/>
+          </svg>
+          <div class="badge-text">
+            <span class="badge-sub">Download on the</span>
+            <span class="badge-title">App Store</span>
+          </div>
+        </a>
+        <a href="#" class="badge-btn">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="feature-icon" style="margin-bottom: 0;">
+            <path d="M3.609 1.814L13.784 12 3.609 22.186C3.234 22.374 3 22.125 3 21.688V2.312C3 1.875 3.234 1.626 3.609 1.814zM14.721 12.937L17.784 16 4.969 22.406C4.469 22.656 4.125 22.469 4.125 22L14.721 12.937zm0-1.874L4.125 2L4.969 1.594C5.469 1.344 5.812 1.531 5.812 2L14.721 11.063zM18.847 12l2.625 1.5c.469.25.469.688 0 .938L15.659 12l5.813-2.438c.469-.25.469-.688 0-.938L18.847 12z"/>
+          </svg>
+          <div class="badge-text">
+            <span class="badge-sub">Get it on</span>
+            <span class="badge-title">Google Play</span>
+          </div>
+        </a>
+      </div>
+    </header>
+
+    <main>
+      <h2 class="features-title">Core Features</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🛡️</div>
+          <div class="feature-name">100% Local Privacy</div>
+          <div class="feature-desc">All calculations and score history are stored strictly on your device. We do not collect, transmit, or share your fitness data.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🏃</div>
+          <div class="feature-name">Cardio Assessment</div>
+          <div class="feature-desc">Calculate scores for the 2-Mile Run, 20m HAMR Shuttle Run, or the 2.0km Walk (Pass/Fail). Includes a built-in HAMR beep player!</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💪</div>
+          <div class="feature-name">Strength & Core</div>
+          <div class="feature-desc">Supports standard push-ups, hand-release push-ups, sit-ups, crunches, and forearm planks with real-time score grading.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📏</div>
+          <div class="feature-name">Waist-to-Height Ratio</div>
+          <div class="feature-desc">Quickly evaluate your WHtR score with visual risk indicators, completely aligned with the new uniform scoring brackets.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <div class="feature-name">Goal Targets ("What do I need?")</div>
+          <div class="feature-desc">Specify your target tier (Pass, Good, Excellent, Max) and instantly see what physical scores you need to achieve it.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <div class="feature-name">Progress Logging</div>
+          <div class="feature-desc">Save history logs locally to track your fitness progression over time and check passing trends.</div>
+        </div>
+      </div>
+
+      <section class="support-section">
+        <h2 class="support-title">Need Support?</h2>
+        <p class="support-desc">Have a question, feedback, or run into an issue? We're here to help. Reach out directly to our support email:</p>
+        <a href="mailto:support@hayniec.com" class="support-email">support@hayniec.com</a>
+      </section>
+    </main>
+
+    <footer>
+      <div class="footer-links">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="mailto:support@hayniec.com">Contact Support</a>
+      </div>
+      <p>&copy; 2026 Hayniec. All rights reserved. This tool is an unofficial reference calculator and is not officially affiliated with the United States Air Force or Department of Defense.</p>
+    </footer>
+  </div>
+</body>
+</html>
