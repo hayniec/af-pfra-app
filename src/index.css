@@ -453,6 +453,7 @@ option {
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--text-muted);
+  -webkit-user-select: none;
   user-select: none;
   flex-shrink: 0;
 }
