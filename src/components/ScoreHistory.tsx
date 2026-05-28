@@ -25,6 +25,16 @@ const EVENT_LABELS: Record<string, string> = {
   situp: 'Sit-ups', crunches: 'Crunches', plank: 'Plank',
 };
 
+function fallbackDownload(csv: string, filename: string) {
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function exportCSV(entries: HistoryEntry[]) {
   const headers = [
     // Human-readable columns (for spreadsheets)
@@ -68,13 +78,33 @@ function exportCSV(entries: HistoryEntry[]) {
     .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
     .join('\n');
 
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = `pfra-scores-${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const filename = `pfra-scores-${new Date().toISOString().slice(0, 10)}.csv`;
+
+  // Use Web Share API if supported (native container WKWebView / Android WebView)
+  if (navigator.share && navigator.canShare) {
+    try {
+      const file = new File([csv], filename, { type: 'text/csv;charset=utf-8;' });
+      if (navigator.canShare({ files: [file] })) {
+        navigator.share({
+          files: [file],
+          title: 'PFRA Scores Export',
+          text: 'Air Force PFRA Calculator Score History'
+        }).then(() => {
+          console.log('Share completed successfully');
+        }).catch(err => {
+          // If the user cancelled or aborted the share, do not trigger download fallback
+          if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
+            fallbackDownload(csv, filename);
+          }
+        });
+        return;
+      }
+    } catch (e) {
+      console.error('Web Share failed, falling back to download:', e);
+    }
+  }
+
+  fallbackDownload(csv, filename);
 }
 
 function parseCSV(text: string): HistoryEntry[] {
