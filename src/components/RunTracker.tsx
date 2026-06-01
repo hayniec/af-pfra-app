@@ -18,6 +18,13 @@ function fmtTime(secs: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
+function fmtPace(secsPerMile: number): string {
+  if (secsPerMile <= 0 || secsPerMile === Infinity || isNaN(secsPerMile)) return '--:--';
+  const m = Math.floor(secsPerMile / 60);
+  const s = Math.floor(secsPerMile % 60);
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}/mi`;
+}
+
 type Status = 'idle' | 'acquiring' | 'running' | 'done' | 'error';
 
 export function RunTracker({ onComplete }: { onComplete: (seconds: number) => void }) {
@@ -137,6 +144,8 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
 
   const progress = Math.min(distance / TARGET_MILES, 1);
 
+  const avgPace = distance > 0 ? elapsed / distance : 0;
+
   return (
     <div className="run-tracker">
       <div className="run-tracker-header">
@@ -153,6 +162,10 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
           <div className="run-stat">
             <span className="run-stat-val">{fmtTime(elapsed)}</span>
             <span className="run-stat-label">time</span>
+          </div>
+          <div className="run-stat">
+            <span className="run-stat-val">{fmtPace(avgPace)}</span>
+            <span className="run-stat-label">pace</span>
           </div>
         </div>
       )}

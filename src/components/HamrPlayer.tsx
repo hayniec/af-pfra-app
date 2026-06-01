@@ -16,7 +16,7 @@ function scheduleBeep(ctx: AudioContext, time: number, freq: number, dur: number
   osc.stop(time + dur + 0.01);
 }
 
-export function HamrPlayer() {
+export function HamrPlayer({ onComplete }: { onComplete?: (shuttles: number) => void }) {
   const [status, setStatus] = useState<PlayerStatus>('idle');
   const [display, setDisplay] = useState({ level: 1, shuttle: 1, total: 0 });
 
@@ -62,6 +62,7 @@ export function HamrPlayer() {
         s.active = false;
         setDisplay({ level: s.levelIdx + 1, shuttle: s.shuttle, total: s.total });
         setStatus('done');
+        onComplete?.(s.total);
         return;
       }
       s.levelIdx = next;
@@ -89,6 +90,8 @@ export function HamrPlayer() {
     stateRef.current.active = false;
     if (timerRef.current) clearTimeout(timerRef.current);
     setStatus('idle');
+    const completed = Math.max(0, stateRef.current.total - 1);
+    onComplete?.(completed);
   };
 
   const reset = () => {

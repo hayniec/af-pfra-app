@@ -210,7 +210,7 @@ export function EventInput({
 
       {paceInfo && (
         <div className="pace-info">
-          <span className="pace-label">Pace</span>
+          <span className="pace-label">Suggested Pace</span>
           <span className="pace-item">{paceInfo.perMile}<span className="pace-unit">/mi</span></span>
         </div>
       )}

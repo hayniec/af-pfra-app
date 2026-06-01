@@ -223,7 +223,7 @@ function App() {
           hamrLevel={hamrLevel}
           paceInfo={runPace}
         />
-        {cardioType === 'hamr' && <HamrPlayer />}
+        {cardioType === 'hamr' && <HamrPlayer onComplete={(shuttles) => setCardioValue(shuttles)} />}
         {cardioType === 'run' && <RunTracker onComplete={(secs) => setCardioValue(secs)} />}
 
         <EventInput
