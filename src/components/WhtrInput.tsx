@@ -6,6 +6,11 @@ interface WhtrInputProps {
   onChange: (ratio: number) => void;
   thresholds?: KeyThresholds | null;
   score?: number;
+  heightValue?: number | null;
+  heightUnit?: 'in' | 'cm';
+  onHeightChange?: (height: number | null, unit: 'in' | 'cm') => void;
+  waistValue?: number | null;
+  onWaistChange?: (waist: number | null) => void;
 }
 
 function scoreColorClass(score: number, thresholds: KeyThresholds): string {
@@ -24,11 +29,38 @@ function scoreTierClass(score: number, thresholds: KeyThresholds): string {
   return 'tier-fail';
 }
 
-export function WhtrInput({ onChange, thresholds, score }: WhtrInputProps) {
-  const [unit, setUnit] = useState<'in' | 'cm'>('in');
-  const [heightRaw, setHeightRaw] = useState('');
-  const [waistRaw, setWaistRaw] = useState('');
+export function WhtrInput({
+  onChange,
+  thresholds,
+  score,
+  heightValue,
+  heightUnit = 'in',
+  onHeightChange,
+  waistValue,
+  onWaistChange,
+}: WhtrInputProps) {
+  const [unit, setUnit] = useState<'in' | 'cm'>(heightUnit);
+  const [heightRaw, setHeightRaw] = useState(heightValue ? String(heightValue) : '');
+  const [waistRaw, setWaistRaw] = useState(waistValue ? String(waistValue) : '');
   const [touched, setTouched] = useState(false);
+
+  useEffect(() => {
+    if (heightUnit !== undefined) {
+      setUnit(heightUnit);
+    }
+  }, [heightUnit]);
+
+  useEffect(() => {
+    if (heightValue !== undefined) {
+      setHeightRaw(heightValue ? String(heightValue) : '');
+    }
+  }, [heightValue]);
+
+  useEffect(() => {
+    if (waistValue !== undefined) {
+      setWaistRaw(waistValue ? String(waistValue) : '');
+    }
+  }, [waistValue]);
 
   const heightNum = parseFloat(heightRaw) || 0;
   const waistNum  = parseFloat(waistRaw)  || 0;
@@ -42,6 +74,32 @@ export function WhtrInput({ onChange, thresholds, score }: WhtrInputProps) {
     onChange(error ? 0 : ratio);
   }, [ratio, error]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleUnitChange = (newUnit: 'in' | 'cm') => {
+    setUnit(newUnit);
+    if (onHeightChange) {
+      onHeightChange(heightNum > 0 ? heightNum : null, newUnit);
+    }
+  };
+
+  const handleHeightInput = (val: string) => {
+    setTouched(true);
+    setHeightRaw(val);
+    const num = parseFloat(val);
+    if (onHeightChange) {
+      onHeightChange(!isNaN(num) && num > 0 ? num : null, unit);
+    }
+  };
+
+  const handleWaistInput = (val: string) => {
+    setTouched(true);
+    setWaistRaw(val);
+    const num = parseFloat(val);
+    if (onWaistChange) {
+      onWaistChange(!isNaN(num) && num > 0 ? num : null);
+    }
+  };
+
+
   return (
     <div className="form-group">
       <div className="whtr-header">
@@ -50,8 +108,9 @@ export function WhtrInput({ onChange, thresholds, score }: WhtrInputProps) {
           {(['in', 'cm'] as const).map(u => (
             <button
               key={u}
+              type="button"
               className={`toggle-btn ${unit === u ? 'active' : ''}`}
-              onClick={() => setUnit(u)}
+              onClick={() => handleUnitChange(u)}
               aria-pressed={unit === u}
             >
               {u}
@@ -70,7 +129,7 @@ export function WhtrInput({ onChange, thresholds, score }: WhtrInputProps) {
             step={unit === 'in' ? '0.5' : '1'}
             placeholder={unit === 'in' ? 'e.g. 70' : 'e.g. 178'}
             value={heightRaw}
-            onChange={(e) => { setTouched(true); setHeightRaw(e.target.value); }}
+            onChange={(e) => handleHeightInput(e.target.value)}
             onBlur={() => setTouched(true)}
           />
         </div>
@@ -83,11 +142,12 @@ export function WhtrInput({ onChange, thresholds, score }: WhtrInputProps) {
             step={unit === 'in' ? '0.5' : '1'}
             placeholder={unit === 'in' ? 'e.g. 34' : 'e.g. 86'}
             value={waistRaw}
-            onChange={(e) => { setTouched(true); setWaistRaw(e.target.value); }}
+            onChange={(e) => handleWaistInput(e.target.value)}
             onBlur={() => setTouched(true)}
           />
         </div>
       </div>
+
 
       {error && (
         <p className="input-error" role="alert">{error}</p>

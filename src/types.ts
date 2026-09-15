@@ -41,3 +41,23 @@ export interface KeyThresholds {
   good: Threshold;
   min: Threshold;
 }
+
+export interface LastAssessmentValues {
+  waist?: number;
+  cardioType?: string;
+  cardioValue?: number;
+  strengthType?: string;
+  strengthValue?: number;
+  coreType?: string;
+  coreValue?: number;
+}
+
+export interface UserProfile {
+  gender: string;
+  ageGroup: string;
+  height: number | null;
+  heightUnit: 'in' | 'cm';
+  rememberLastValues: boolean;
+  lastValues?: LastAssessmentValues;
+}
+

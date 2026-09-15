@@ -21,7 +21,9 @@ import { ScoreHistory } from './components/ScoreHistory';
 import { EventInput } from './components/EventInput';
 import type { EventOption } from './components/EventInput';
 import { useHistory } from './hooks/useHistory';
+import { useProfile } from './hooks/useProfile';
 import { WhtrInput } from './components/WhtrInput';
+import { ProfileSettingsModal } from './components/ProfileSettingsModal';
 
 const scoringData = rawScoringData as ScoringTable[];
 
@@ -47,18 +49,59 @@ const CORE_OPTIONS: EventOption[] = [
 ];
 
 function App() {
-  const [gender, setGender] = useState('male');
-  const [ageGroup, setAgeGroup] = useState('<25');
+  const {
+    profile,
+    updateProfile,
+    setRememberLastValues,
+    updateLastValues,
+    clearProfile,
+  } = useProfile();
+
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [savedFeedback, setSavedFeedback] = useState(false);
   const { entries, save, remove, clearAll, importEntries } = useHistory();
 
+  // Initialize event types & values from profile.lastValues if rememberLastValues is enabled
+  const [cardioType, setCardioType] = useState<string>(() =>
+    profile.rememberLastValues && profile.lastValues?.cardioType
+      ? profile.lastValues.cardioType
+      : 'run'
+  );
+  const [cardioValue, setCardioValue] = useState<number>(() =>
+    profile.rememberLastValues && profile.lastValues?.cardioValue !== undefined
+      ? profile.lastValues.cardioValue
+      : DEFAULT_VALUES.run
+  );
+  const [strengthType, setStrengthType] = useState<string>(() =>
+    profile.rememberLastValues && profile.lastValues?.strengthType
+      ? profile.lastValues.strengthType
+      : 'pushup'
+  );
+  const [strengthValue, setStrengthValue] = useState<number>(() =>
+    profile.rememberLastValues && profile.lastValues?.strengthValue !== undefined
+      ? profile.lastValues.strengthValue
+      : DEFAULT_VALUES.pushup
+  );
+  const [coreType, setCoreType] = useState<string>(() =>
+    profile.rememberLastValues && profile.lastValues?.coreType
+      ? profile.lastValues.coreType
+      : 'situp'
+  );
+  const [coreValue, setCoreValue] = useState<number>(() =>
+    profile.rememberLastValues && profile.lastValues?.coreValue !== undefined
+      ? profile.lastValues.coreValue
+      : DEFAULT_VALUES.situp
+  );
+  const [waistValue, setWaistValue] = useState<number | null>(() =>
+    profile.rememberLastValues && profile.lastValues?.waist !== undefined
+      ? profile.lastValues.waist
+      : null
+  );
+
   const [whtrValue, setWhtrValue] = useState(DEFAULT_VALUES.whtr);
-  const [cardioType, setCardioType] = useState('run');
-  const [cardioValue, setCardioValue] = useState(DEFAULT_VALUES.run);
-  const [strengthType, setStrengthType] = useState('pushup');
-  const [strengthValue, setStrengthValue] = useState(DEFAULT_VALUES.pushup);
-  const [coreType, setCoreType] = useState('situp');
-  const [coreValue, setCoreValue] = useState(DEFAULT_VALUES.situp);
+
+  const gender = profile.gender;
+  const ageGroup = profile.ageGroup;
 
   const colIdx = useMemo(() => getColIdx(ageGroup, gender), [ageGroup, gender]);
 
@@ -127,19 +170,64 @@ function App() {
     return table ? getKeyThresholds(table, colIdx) : null;
   }, [coreType, colIdx]);
 
+  // Handle updates to event selections & values
   const handleCardioTypeChange = (type: string) => {
     setCardioType(type);
-    setCardioValue(DEFAULT_VALUES[type]);
+    const val = DEFAULT_VALUES[type];
+    setCardioValue(val);
+    if (profile.rememberLastValues) {
+      updateLastValues({ cardioType: type, cardioValue: val });
+    }
+  };
+
+  const handleCardioValueChange = (val: number) => {
+    setCardioValue(val);
+    if (profile.rememberLastValues) {
+      updateLastValues({ cardioValue: val });
+    }
   };
 
   const handleStrengthTypeChange = (type: string) => {
     setStrengthType(type);
-    setStrengthValue(DEFAULT_VALUES[type]);
+    const val = DEFAULT_VALUES[type];
+    setStrengthValue(val);
+    if (profile.rememberLastValues) {
+      updateLastValues({ strengthType: type, strengthValue: val });
+    }
+  };
+
+  const handleStrengthValueChange = (val: number) => {
+    setStrengthValue(val);
+    if (profile.rememberLastValues) {
+      updateLastValues({ strengthValue: val });
+    }
   };
 
   const handleCoreTypeChange = (type: string) => {
     setCoreType(type);
-    setCoreValue(DEFAULT_VALUES[type]);
+    const val = DEFAULT_VALUES[type];
+    setCoreValue(val);
+    if (profile.rememberLastValues) {
+      updateLastValues({ coreType: type, coreValue: val });
+    }
+  };
+
+  const handleCoreValueChange = (val: number) => {
+    setCoreValue(val);
+    if (profile.rememberLastValues) {
+      updateLastValues({ coreValue: val });
+    }
+  };
+
+  const handleHeightChange = (height: number | null, unit: 'in' | 'cm') => {
+    updateProfile({ height, heightUnit: unit });
+  };
+
+  const handleWaistChange = (waist: number | null) => {
+    setWaistValue(waist);
+    if (profile.rememberLastValues && waist !== null) {
+      updateLastValues({ waist });
+    }
   };
 
   const canSave = totalScore > 0;
@@ -167,18 +255,44 @@ function App() {
       </header>
 
       <div className="card animate-fade-in delay-1">
-        <h3 className="section-title">Member Profile</h3>
-        <div className="input-row">
+        <div className="card-header-with-actions">
+          <h3 className="section-title" style={{ marginBottom: 0 }}>Member Profile</h3>
+          <div className="profile-actions-row">
+            <span className="profile-saved-badge" title="Profile saved to browser local storage">
+              ✓ Saved Locally
+            </span>
+            <button
+              type="button"
+              className="settings-gear-btn"
+              onClick={() => setIsSettingsOpen(true)}
+              aria-label="Open profile settings"
+              title="Profile Settings"
+            >
+              ⚙️ Settings
+            </button>
+          </div>
+        </div>
+
+        <div className="input-row" style={{ marginTop: '1rem' }}>
           <div className="form-group">
             <label htmlFor="gender">Gender</label>
-            <select id="gender" value={gender} onChange={(e) => setGender(e.target.value)}>
+            <select
+              id="gender"
+              value={gender}
+              onChange={(e) => updateProfile({ gender: e.target.value })}
+            >
               <option value="male">Male</option>
               <option value="female">Female</option>
             </select>
           </div>
+
           <div className="form-group">
             <label htmlFor="ageGroup">Age Group</label>
-            <select id="ageGroup" value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)}>
+            <select
+              id="ageGroup"
+              value={ageGroup}
+              onChange={(e) => updateProfile({ ageGroup: e.target.value })}
+            >
               {AGE_GROUPS.map(age => (
                 <option key={age} value={age}>{age === '<25' ? 'Under 25' : age}</option>
               ))}
@@ -194,6 +308,11 @@ function App() {
           onChange={setWhtrValue}
           thresholds={whtrThresholds}
           score={whtrScore}
+          heightValue={profile.height}
+          heightUnit={profile.heightUnit}
+          onHeightChange={handleHeightChange}
+          waistValue={waistValue}
+          onWaistChange={handleWaistChange}
         />
 
         <GoalLookup
@@ -214,7 +333,7 @@ function App() {
           selectedType={cardioType}
           onTypeChange={handleCardioTypeChange}
           value={cardioValue}
-          onChange={setCardioValue}
+          onChange={handleCardioValueChange}
           placeholder={cardioType === 'hamr' ? 'Total Shuttles' : 'Enter value'}
           thresholds={cardioThresholds}
           valueType={cardioType}
@@ -223,8 +342,8 @@ function App() {
           hamrLevel={hamrLevel}
           paceInfo={runPace}
         />
-        {cardioType === 'hamr' && <HamrPlayer onComplete={(shuttles) => setCardioValue(shuttles)} />}
-        {cardioType === 'run' && <RunTracker onComplete={(secs) => setCardioValue(secs)} />}
+        {cardioType === 'hamr' && <HamrPlayer onComplete={(shuttles) => handleCardioValueChange(shuttles)} />}
+        {cardioType === 'run' && <RunTracker onComplete={(secs) => handleCardioValueChange(secs)} />}
 
         <EventInput
           key={strengthType}
@@ -234,7 +353,7 @@ function App() {
           selectedType={strengthType}
           onTypeChange={handleStrengthTypeChange}
           value={strengthValue}
-          onChange={setStrengthValue}
+          onChange={handleStrengthValueChange}
           placeholder="Repetitions"
           thresholds={strengthThresholds}
           valueType={strengthType}
@@ -249,7 +368,7 @@ function App() {
           selectedType={coreType}
           onTypeChange={handleCoreTypeChange}
           value={coreValue}
-          onChange={setCoreValue}
+          onChange={handleCoreValueChange}
           placeholder="Repetitions"
           thresholds={coreThresholds}
           valueType={coreType}
@@ -296,6 +415,15 @@ function App() {
         onRemove={remove}
         onClearAll={clearAll}
         onImport={importEntries}
+      />
+
+      <ProfileSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        profile={profile}
+        onUpdateProfile={updateProfile}
+        onToggleRemember={setRememberLastValues}
+        onClearProfile={clearProfile}
       />
     </div>
   );
