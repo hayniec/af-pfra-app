@@ -35,11 +35,17 @@ function fallbackDownload(csv: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
+/** Earned points as a percentage of what was available for that assessment. */
+function percentOf(e: HistoryEntry): number {
+  const available = e.availablePoints ?? 100;
+  return available > 0 ? Math.round((e.compositeScore / available) * 1000) / 10 : 0;
+}
+
 function exportCSV(entries: HistoryEntry[]) {
   const headers = [
     // Human-readable columns (for spreadsheets)
     'Date', 'Time', 'Gender', 'Age Group',
-    'Composite Score', 'Result',
+    'Composite Score', 'Available', 'Percent', 'Result',
     'WHtR Score', 'Cardio Type', 'Cardio Score',
     'Strength Type', 'Strength Score', 'Core Type', 'Core Score',
     // Raw columns (prefixed with _ — used for re-import)
@@ -49,6 +55,7 @@ function exportCSV(entries: HistoryEntry[]) {
     '_coreType', '_coreValue',
     '_compositeScore', '_passed',
     '_whtrScore', '_cardioScore', '_strengthScore', '_coreScore',
+    '_availablePoints', '_whtrExempt',
   ];
 
   const rows = entries.map(e => [
@@ -57,6 +64,8 @@ function exportCSV(entries: HistoryEntry[]) {
     e.gender === 'male' ? 'Male' : 'Female',
     e.ageGroup === '<25' ? 'Under 25' : e.ageGroup,
     e.compositeScore,
+    e.availablePoints ?? 100,
+    percentOf(e).toFixed(1),
     e.passed ? 'Pass' : 'Fail',
     e.whtrScore.toFixed(1),
     EVENT_LABELS[e.cardioType] ?? e.cardioType,
@@ -72,6 +81,7 @@ function exportCSV(entries: HistoryEntry[]) {
     e.coreType, e.coreValue,
     e.compositeScore, e.passed ? '1' : '0',
     e.whtrScore, e.cardioScore, e.strengthScore, e.coreScore,
+    e.availablePoints ?? 100, e.whtrExempt ? '1' : '0',
   ]);
 
   const csv = [headers, ...rows]
@@ -165,6 +175,8 @@ function parseCSV(text: string): HistoryEntry[] {
         cardioScore:    Number(get('_cardioScore')),
         strengthScore:  Number(get('_strengthScore')),
         coreScore:      Number(get('_coreScore')),
+        availablePoints: Number(get('_availablePoints')) || 100,
+        whtrExempt:      get('_whtrExempt') === '1',
       });
     } catch {
       // skip malformed rows
@@ -251,7 +263,11 @@ export function ScoreHistory({ entries, onRemove, onClearAll, onImport }: ScoreH
                 <div className="history-score-row">
                   <div className="history-score">
                     <span className="history-score-num">{entry.compositeScore}</span>
-                    <span className="history-score-label">pts</span>
+                    <span className="history-score-label">
+                      {(entry.availablePoints ?? 100) < 100
+                        ? `/ ${entry.availablePoints} pts · ${percentOf(entry).toFixed(1)}%`
+                        : 'pts'}
+                    </span>
                   </div>
                   <span className={`history-pass-badge ${entry.passed ? 'badge-pass' : 'badge-fail'}`}>
                     {entry.passed ? 'PASS' : 'FAIL'}
@@ -264,7 +280,9 @@ export function ScoreHistory({ entries, onRemove, onClearAll, onImport }: ScoreH
                 </div>
 
                 <div className="history-breakdown">
-                  <span className="history-stat">WHtR {entry.whtrScore.toFixed(1)}</span>
+                  <span className="history-stat">
+                    WHtR {entry.whtrExempt ? 'Exempt' : entry.whtrScore.toFixed(1)}
+                  </span>
                   <span className="history-sep">·</span>
                   <span className="history-stat">
                     {EVENT_LABELS[entry.cardioType] ?? entry.cardioType}{' '}

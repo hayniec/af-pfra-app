@@ -5,12 +5,12 @@ import type { ScoringTable } from './types';
 import {
   AGE_GROUPS,
   TABLE_MAP,
-  PASS_THRESHOLD,
   DEFAULT_VALUES,
   getColIdx,
   calculateScore,
-  calculateComposite,
   roundWhtr,
+  evaluateAssessment,
+  COMPONENT_MAX,
   getKeyThresholds,
   getWalkThreshold,
   getHamrLevel,
@@ -101,6 +101,9 @@ function App() {
   );
 
   const [whtrValue, setWhtrValue] = useState(DEFAULT_VALUES.whtr);
+  // Members with a medical exemption from the WHtR component are scored on the
+  // points still available to them rather than out of a flat 100.
+  const [whtrExempt, setWhtrExempt] = useState(false);
 
   const gender = profile.gender;
   const ageGroup = profile.ageGroup;
@@ -108,6 +111,8 @@ function App() {
   const colIdx = useMemo(() => getColIdx(ageGroup, gender), [ageGroup, gender]);
 
   const whtrScore = useMemo(() => {
+    // No measurement yet — a ratio of 0 is "not entered", not a perfect 0.49
+    if (whtrValue <= 0) return 0;
     const table = getTable(TABLE_MAP.whtr);
     return table ? calculateScore(table, colIdx, roundWhtr(whtrValue)) : 0;
   }, [whtrValue, colIdx]);
@@ -135,11 +140,22 @@ function App() {
     return { threshold, passed };
   }, [cardioType, cardioValue, ageGroup, gender]);
 
-  const totalScore = calculateComposite(cardioScore, strengthScore, coreScore, whtrScore);
   const cardioPass = cardioType === 'walk'
     ? (walkPassFail?.passed === true)
     : cardioScore > 0;
-  const isPass = totalScore >= PASS_THRESHOLD && cardioPass && strengthScore > 0 && coreScore > 0;
+
+  // The walk earns no points and an exempt WHtR is not assessed, so both drop out
+  // of the available total instead of dragging an unreachable composite down.
+  const assessment = useMemo(() => evaluateAssessment({
+    whtrScore: whtrExempt ? null : whtrScore,
+    cardioScore: cardioType === 'walk' ? null : cardioScore,
+    cardioMet: cardioPass,
+    strengthScore,
+    coreScore,
+  }), [whtrExempt, whtrScore, cardioType, cardioScore, cardioPass, strengthScore, coreScore]);
+
+  const totalScore = assessment.earned;
+  const isPass = assessment.passed;
 
   const whtrThresholds = useMemo(() => {
     const table = getTable(TABLE_MAP.whtr);
@@ -242,6 +258,8 @@ function App() {
       coreType, coreValue,
       whtrValue,
       compositeScore: totalScore,
+      availablePoints: assessment.available,
+      whtrExempt,
       passed: isPass,
       whtrScore, cardioScore, strengthScore, coreScore,
     });
@@ -308,6 +326,8 @@ function App() {
 
         <WhtrInput
           onChange={setWhtrValue}
+          exempt={whtrExempt}
+          onExemptChange={setWhtrExempt}
           thresholds={whtrThresholds}
           score={whtrScore}
           heightValue={profile.height}
@@ -381,17 +401,31 @@ function App() {
       <div className="score-display animate-fade-in delay-3" aria-live="polite">
         <p className="score-label">Composite Score</p>
         <h2>{totalScore.toFixed(1)}</h2>
-        <div className={`score-status ${isPass ? (totalScore >= 90 ? 'status-excellent' : 'status-pass') : 'status-fail'}`}>
-          {isPass ? (totalScore >= 90 ? 'Excellent' : 'Satisfactory') : 'Unsatisfactory'}
+        {assessment.prorated && (
+          <p className="score-prorated">
+            of {assessment.available.toFixed(1)} available · {assessment.percent.toFixed(1)}%
+            <span className="score-prorated-note"> (75% required)</span>
+          </p>
+        )}
+        <div className={`score-status ${isPass ? (assessment.percent >= 90 ? 'status-excellent' : 'status-pass') : 'status-fail'}`}>
+          {isPass ? (assessment.percent >= 90 ? 'Excellent' : 'Satisfactory') : 'Unsatisfactory'}
         </div>
         <div className="score-breakdown">
           <div className="component-score">
             <span className="component-label">WHtR Score:</span>
-            <span className="component-value">{whtrScore.toFixed(1)} / 20</span>
+            <span className="component-value">
+              {whtrExempt ? 'Exempt' : `${whtrScore.toFixed(1)} / ${COMPONENT_MAX.whtr}`}
+            </span>
           </div>
           <div className="component-score">
             <span className="component-label">Cardio Score:</span>
-            <span className="component-value">{cardioScore.toFixed(1)} / 50</span>
+            <span className="component-value">
+              {cardioType === 'walk'
+                ? (walkPassFail?.passed === null
+                    ? 'Walk — not entered'
+                    : `Walk — ${walkPassFail?.passed ? 'Pass' : 'Fail'} (no points)`)
+                : `${cardioScore.toFixed(1)} / ${COMPONENT_MAX.cardio}`}
+            </span>
           </div>
           <div className="component-score">
             <span className="component-label">Strength Score:</span>

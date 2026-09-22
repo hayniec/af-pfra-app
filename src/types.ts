@@ -11,6 +11,10 @@ export interface HistoryEntry {
   coreValue: number;
   whtrValue: number;
   compositeScore: number;
+  /** Points available for this assessment — below 100 when a component was exempt
+   *  or unscored. Absent on entries saved before proration existed. */
+  availablePoints?: number;
+  whtrExempt?: boolean;
   passed: boolean;
   whtrScore: number;
   cardioScore: number;

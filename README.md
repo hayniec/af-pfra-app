@@ -23,13 +23,28 @@ An airman's PFRA score is compiled from four components:
 4. **Waist to Height Ratio (WHtR) (Max 20.0 pts)**: Calculated by dividing waist circumference by height.
 
 ### Passing Requirements:
-- **Composite Score**: **≥ 75.0 points**.
-- **Minimum Component Performance**: Graded components must achieve at least the minimum score thresholds (usually > 0 pts, which corresponds to the **2.5 pts** row for strength/core and **35.0 pts** row for cardiorespiratory events).
+- **Composite Score**: **≥ 75.0 points** out of the 100 available — or, when a component is exempt or unscored, **≥ 75% of the points that remain available**.
+- **Minimum Component Performance**: Every *scored* component must clear its minimum — the **2.5 pts** row for strength/core and the **35.0 pts** row for cardiorespiratory events (marked with an asterisk on the official charts). A member below any of these fails regardless of composite. WHtR has no minimum.
+- **No rounding to a whole number**: components are awarded in half-points, so a composite of **74.5 is a fail** — it is not rounded up to 75.
+
+#### Components that are exempt or unscored
+When a component contributes no points, it is removed from both the earned total and the available total rather than counted as a zero:
+
+| Situation | Points available | Passing score |
+|---|---|---|
+| Fully scored assessment | 100 | 75.0 |
+| 2.0 km walk (cardio is pass/fail, earns no points) | 50 | 37.5 |
+| WHtR exemption | 80 | 60.0 |
+| Walk **and** WHtR exemption | 30 | 22.5 |
+
+The walk must still be finished inside its time standard, and the strength and core minimums still apply.
 
 ---
 
 ## 1. Waist to Height Ratio (WHtR) Scoring Standards (All Ages & Genders)
 Unlike physical performance events, WHtR standards are uniform across all age brackets and genders.
+
+The chart is written in hundredths, so a measured ratio is rounded to two decimals before lookup — a 34.5" waist on a 70" frame is 0.4929, which scores as 0.49 (20.0 pts). The official charts mark a minimum component standard with an asterisk on the cardio, strength and core tables; **the WHtR table carries no asterisk, so WHtR has no minimum of its own** — 0.0 pts does not by itself fail the assessment. Members with a WHtR exemption can mark it in the app, which removes the 20 points from the total available (see Passing Requirements).
 
 | Risk Category | WHtR Ratio | Points Awarded |
 |---|---|---|
@@ -44,7 +59,7 @@ Unlike physical performance events, WHtR standards are uniform across all age br
 | | 0.57 | **7.5 pts** |
 | | 0.58 | **5.0 pts** |
 | | 0.59 | **2.5 pts** |
-| | ≥ 0.60 | **0.0 pts** (Automatic Fail if not exempt) |
+| | ≥ 0.60 | **0.0 pts** |
 
 ---
 
@@ -85,7 +100,7 @@ Unlike physical performance events, WHtR standards are uniform across all age br
 ---
 
 ### 2.0 Kilometer Walk (Pass/Fail Standard)
-*The walk event is graded on a pass/fail basis. Finishing under the target time constitutes a pass (no points are added to the composite score, but cardiorespiratory requirement is satisfied).*
+*The walk event is graded on a pass/fail basis. Finishing under the target time satisfies the cardiorespiratory requirement but earns no points, so the 50 cardio points drop out of the total available and the assessment is scored on the remaining 50 (37.5 needed to pass).*
 
 | Age Bracket | Male Passing Time (max) | Female Passing Time (max) |
 |---|---|---|

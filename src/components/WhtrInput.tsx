@@ -4,6 +4,8 @@ import type { KeyThresholds } from '../types';
 
 interface WhtrInputProps {
   onChange: (ratio: number) => void;
+  exempt?: boolean;
+  onExemptChange?: (exempt: boolean) => void;
   thresholds?: KeyThresholds | null;
   score?: number;
   heightValue?: number | null;
@@ -31,6 +33,8 @@ function scoreTierClass(score: number, thresholds: KeyThresholds): string {
 
 export function WhtrInput({
   onChange,
+  exempt = false,
+  onExemptChange,
   thresholds,
   score,
   heightValue,
@@ -119,6 +123,24 @@ export function WhtrInput({
         </div>
       </div>
 
+      {onExemptChange && (
+        <label className="whtr-exempt-toggle">
+          <input
+            type="checkbox"
+            checked={exempt}
+            onChange={(e) => onExemptChange(e.target.checked)}
+          />
+          <span>Exempt from WHtR component</span>
+        </label>
+      )}
+
+      {exempt ? (
+        <p className="whtr-exempt-note">
+          Exempt — the 20 WHtR points are removed from the total available, and the
+          assessment is scored on 75% of the points that remain.
+        </p>
+      ) : (
+      <>
       <div className="input-row">
         <div className="form-group">
           <label htmlFor="whtr-height">Height ({unit})</label>
@@ -187,6 +209,8 @@ export function WhtrInput({
             </div>
           )}
         </div>
+      )}
+      </>
       )}
     </div>
   );
