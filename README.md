@@ -28,7 +28,7 @@ An airman's PFRA score is compiled from four components:
 - **No rounding to a whole number**: components are awarded in half-points, so a composite of **74.5 is a fail** — it is not rounded up to 75.
 
 #### Components that are exempt or unscored
-When a component contributes no points, it is removed from both the earned total and the available total rather than counted as a zero:
+Any of the four components can be marked exempt, and the 2.0 km walk earns no points. A component that contributes no points is removed from both the earned total and the points available rather than counted as a zero, and the composite is reported as a percentage of what remained available:
 
 | Situation | Points available | Passing score |
 |---|---|---|
@@ -37,7 +37,7 @@ When a component contributes no points, it is removed from both the earned total
 | WHtR exemption | 80 | 60.0 |
 | Walk **and** WHtR exemption | 30 | 22.5 |
 
-The walk must still be finished inside its time standard, and the strength and core minimums still apply.
+Every component that *is* scored must still clear its own minimum, and a walk must still finish inside its time standard. If every component is exempt there is nothing to assess; if the only remaining cardio event is the walk, the assessment is pass/fail on the walk alone.
 
 ---
 

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Geolocation } from '@capacitor/geolocation';
 
 const TARGET_MILES = 2.0;
 
@@ -33,7 +34,7 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
   const [elapsed, setElapsed]   = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const watchIdRef      = useRef<number | null>(null);
+  const watchIdRef      = useRef<string | null>(null);
   const timerRef        = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef    = useRef(0);
   const timerStartedRef = useRef(false);
@@ -44,9 +45,9 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
   onCompleteRef.current = onComplete;
 
   // Always-fresh position handler — avoids stale closure in watchPosition callback
-  const posHandlerRef = useRef<(pos: GeolocationPosition) => void>(() => {});
+  const posHandlerRef = useRef<(pos: any) => void>(() => {});
 
-  posHandlerRef.current = (pos: GeolocationPosition) => {
+  posHandlerRef.current = (pos: any) => {
     if (!activeRef.current) return;
 
     const { latitude: lat, longitude: lon, accuracy } = pos.coords;
@@ -94,7 +95,7 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
 
   const cleanup = () => {
     if (watchIdRef.current !== null) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
+      Geolocation.clearWatch({ id: watchIdRef.current });
       watchIdRef.current = null;
     }
     if (timerRef.current !== null) {
@@ -103,11 +104,19 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
     }
   };
 
-  const start = () => {
-    if (!navigator.geolocation) {
-      setErrorMsg('GPS is not available in this browser.');
-      setStatus('error');
-      return;
+  const start = async () => {
+    try {
+      const perm = await Geolocation.checkPermissions();
+      if (perm.location !== 'granted') {
+        const req = await Geolocation.requestPermissions();
+        if (req.location !== 'granted') {
+          setErrorMsg('Location permission denied. Please enable GPS in your device settings.');
+          setStatus('error');
+          return;
+        }
+      }
+    } catch (e) {
+      console.error('Permission check failed', e);
     }
 
     cleanup();
@@ -121,17 +130,19 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
     setErrorMsg(null);
     setStatus('acquiring');
 
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      (pos) => posHandlerRef.current(pos),
-      (err) => {
-        setErrorMsg(err.code === 1
-          ? 'Location permission denied. Enable GPS in your browser settings.'
-          : 'Unable to get GPS signal. Try moving outside.');
-        setStatus('error');
-        cleanup();
-      },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 },
-    );
+    try {
+      const watchId = await Geolocation.watchPosition(
+        { enableHighAccuracy: true, timeout: 15000 },
+        (pos) => {
+          if (pos) posHandlerRef.current(pos);
+        }
+      );
+      watchIdRef.current = watchId;
+    } catch (err) {
+      setErrorMsg('Unable to start GPS. Try moving outside.');
+      setStatus('error');
+      cleanup();
+    }
   };
 
   const stop = () => {
@@ -143,7 +154,6 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
   useEffect(() => () => { cleanup(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const progress = Math.min(distance / TARGET_MILES, 1);
-
   const avgPace = distance > 0 ? elapsed / distance : 0;
 
   return (

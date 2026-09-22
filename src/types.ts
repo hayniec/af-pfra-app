@@ -1,3 +1,17 @@
+export interface Exemptions {
+  whtr: boolean;
+  cardio: boolean;
+  strength: boolean;
+  core: boolean;
+}
+
+export const DEFAULT_EXEMPTIONS: Exemptions = {
+  whtr: false,
+  cardio: false,
+  strength: false,
+  core: false,
+};
+
 export interface HistoryEntry {
   id: string;
   savedAt: string; // ISO date string
@@ -11,15 +25,12 @@ export interface HistoryEntry {
   coreValue: number;
   whtrValue: number;
   compositeScore: number;
-  /** Points available for this assessment — below 100 when a component was exempt
-   *  or unscored. Absent on entries saved before proration existed. */
-  availablePoints?: number;
-  whtrExempt?: boolean;
   passed: boolean;
   whtrScore: number;
   cardioScore: number;
   strengthScore: number;
   coreScore: number;
+  exemptions?: Exemptions; // backward compat: missing = all false
 }
 
 export interface ScoringRow {

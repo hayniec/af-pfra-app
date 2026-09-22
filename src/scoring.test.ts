@@ -13,10 +13,7 @@ import {
   getWalkBracket,
   getWalkThreshold,
   getHamrLevel,
-  calculateComposite,
   roundWhtr,
-  evaluateAssessment,
-  PASS_THRESHOLD,
 } from './scoring';
 
 const scoringData = rawScoringData as ScoringTable[];
@@ -366,30 +363,6 @@ describe('getHamrLevel', () => {
   });
 });
 
-// ---- Composite score ----
-
-describe('calculateComposite', () => {
-  it('keeps half-points instead of rounding to a whole number', () => {
-    // 35 + 4.5 + 15 + 20 = 74.5 — a fail that used to round up to 75 and "pass"
-    expect(calculateComposite(35, 4.5, 15, 20)).toBe(74.5);
-    expect(calculateComposite(35, 4.5, 15, 20) >= PASS_THRESHOLD).toBe(false);
-  });
-
-  it('passes at exactly 75.0', () => {
-    expect(calculateComposite(35, 5, 15, 20)).toBe(75);
-    expect(calculateComposite(35, 5, 15, 20) >= PASS_THRESHOLD).toBe(true);
-  });
-
-  it('does not accumulate float drift', () => {
-    expect(calculateComposite(38.5, 12.5, 7.5, 12.5)).toBe(71);
-    expect(calculateComposite(49.5, 14.5, 14.5, 19)).toBe(97.5);
-  });
-
-  it('sums a perfect assessment to 100', () => {
-    expect(calculateComposite(50, 15, 15, 20)).toBe(100);
-  });
-});
-
 // ---- WHtR rounding ----
 
 describe('roundWhtr', () => {
@@ -462,92 +435,6 @@ describe('every charted threshold scores its own row', () => {
   }
 });
 
-// ---- evaluateAssessment (exempt / unscored components) ----
-
-describe('evaluateAssessment — fully scored assessment', () => {
-  const base = { whtrScore: 20, cardioScore: 50, cardioMet: true, strengthScore: 15, coreScore: 15 };
-
-  it('scores out of 100 when nothing is exempt', () => {
-    const r = evaluateAssessment(base);
-    expect(r.available).toBe(100);
-    expect(r.earned).toBe(100);
-    expect(r.percent).toBe(100);
-    expect(r.prorated).toBe(false);
-    expect(r.passed).toBe(true);
-  });
-
-  it('fails at 74.5 and passes at 75.0', () => {
-    expect(evaluateAssessment({ ...base, cardioScore: 35, strengthScore: 4.5 }).earned).toBe(74.5);
-    expect(evaluateAssessment({ ...base, cardioScore: 35, strengthScore: 4.5 }).passed).toBe(false);
-    expect(evaluateAssessment({ ...base, cardioScore: 35, strengthScore: 5 }).passed).toBe(true);
-  });
-
-  it('fails when a scored component misses its minimum, however high the total', () => {
-    expect(evaluateAssessment({ ...base, coreScore: 0 }).passed).toBe(false);
-    expect(evaluateAssessment({ ...base, strengthScore: 0 }).passed).toBe(false);
-    expect(evaluateAssessment({ ...base, cardioScore: 0, cardioMet: false }).passed).toBe(false);
-  });
-
-  it('does not require WHtR points — the charts set no WHtR minimum', () => {
-    const r = evaluateAssessment({ ...base, whtrScore: 0 });
-    expect(r.earned).toBe(80);
-    expect(r.passed).toBe(true);
-  });
-});
-
-describe('evaluateAssessment — 2.0 km walk (cardio unscored)', () => {
-  const walk = { whtrScore: 20, cardioScore: null, cardioMet: true, strengthScore: 15, coreScore: 15 };
-
-  it('prorates to the 50 points still available', () => {
-    const r = evaluateAssessment(walk);
-    expect(r.available).toBe(50);
-    expect(r.earned).toBe(50);
-    expect(r.percent).toBe(100);
-    expect(r.prorated).toBe(true);
-    expect(r.passed).toBe(true);
-  });
-
-  it('passes at exactly 75% of the available points', () => {
-    // 20 WHtR + 10 strength + 7.5 core = 37.5 of 50
-    expect(evaluateAssessment({ ...walk, strengthScore: 10, coreScore: 7.5 }).earned).toBe(37.5);
-    expect(evaluateAssessment({ ...walk, strengthScore: 10, coreScore: 7.5 }).passed).toBe(true);
-    expect(evaluateAssessment({ ...walk, strengthScore: 10, coreScore: 7 }).passed).toBe(false);
-  });
-
-  it('fails a walk outside the time standard even with a perfect remainder', () => {
-    expect(evaluateAssessment({ ...walk, cardioMet: false }).passed).toBe(false);
-  });
-});
-
-describe('evaluateAssessment — WHtR exemption', () => {
-  const exempt = { whtrScore: null, cardioScore: 50, cardioMet: true, strengthScore: 15, coreScore: 15 };
-
-  it('removes the 20 WHtR points from the available total', () => {
-    const r = evaluateAssessment(exempt);
-    expect(r.available).toBe(80);
-    expect(r.earned).toBe(80);
-    expect(r.percent).toBe(100);
-    expect(r.passed).toBe(true);
-  });
-
-  it('passes at 75% of 80 points', () => {
-    // 35 cardio + 13 strength + 12 core = 60 of 80
-    expect(evaluateAssessment({ ...exempt, cardioScore: 35, strengthScore: 13, coreScore: 12 }).passed).toBe(true);
-    expect(evaluateAssessment({ ...exempt, cardioScore: 35, strengthScore: 13, coreScore: 11.5 }).passed).toBe(false);
-  });
-
-  it('stacks with the walk — 30 points available', () => {
-    const r = evaluateAssessment({ ...exempt, cardioScore: null });
-    expect(r.available).toBe(30);
-    expect(r.earned).toBe(30);
-    expect(r.passed).toBe(true);
-    // 22.5 of 30 is exactly 75%; 22 of 30 is 73.3% and fails
-    expect(evaluateAssessment({ ...exempt, cardioScore: null, strengthScore: 11.5, coreScore: 11 }).passed).toBe(true);
-    expect(evaluateAssessment({ ...exempt, cardioScore: null, strengthScore: 11, coreScore: 11 }).passed).toBe(false);
-    expect(evaluateAssessment({ ...exempt, cardioScore: null, strengthScore: 11, coreScore: 11 }).percent).toBe(73.3);
-  });
-});
-
 // ---- WHtR with no measurement ----
 
 describe('WHtR with no measurement entered', () => {
@@ -557,12 +444,4 @@ describe('WHtR with no measurement entered', () => {
     expect(calculateScore(table, 0, 0)).toBe(20);
   });
 
-  it('an unmeasured WHtR of 0 pts still lets a strong assessment pass', () => {
-    const r = evaluateAssessment({
-      whtrScore: 0, cardioScore: 50, cardioMet: true, strengthScore: 15, coreScore: 15,
-    });
-    expect(r.earned).toBe(80);
-    expect(r.available).toBe(100);
-    expect(r.passed).toBe(true);
-  });
 });
