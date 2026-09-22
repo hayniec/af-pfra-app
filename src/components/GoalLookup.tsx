@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import rawScoringData from '../scoringData.json';
-import type { ScoringTable } from '../types';
+import type { ScoringTable, Exemptions } from '../types';
 import {
   TABLE_MAP,
   formatValue,
@@ -18,29 +18,36 @@ const TIERS = [
   { label: 'Max',       score: 100 },
 ] as const;
 
-const EVENT_MAX = { whtr: 20, cardio: 50, strength: 15, core: 15 } as const;
-const MAX_OTHERS = EVENT_MAX.cardio + EVENT_MAX.strength + EVENT_MAX.core; // 80
+const COMPONENT_MAX = { whtr: 20, cardio: 50, strength: 15, core: 15 } as const;
 
 /**
- * Distributes `remaining` points across cardio/strength/core proportionally,
- * using the largest-remainder method so parts sum exactly to `remaining`.
- * Returns null if remaining exceeds what those three events can provide.
+ * Distributes `remaining` points across the given non-exempt scored components
+ * proportionally, using the largest-remainder method so parts sum exactly to
+ * `remaining`. Returns null if remaining exceeds what the available components
+ * can provide.
  */
 function distributeRemaining(
   remaining: number,
-): { cardio: number; strength: number; core: number } | null {
-  if (remaining > MAX_OTHERS) return null;
-  if (remaining <= 0) return { cardio: 0, strength: 0, core: 0 };
+  available: { key: string; max: number }[],
+): Record<string, number> | null {
+  const totalMax = available.reduce((s, a) => s + a.max, 0);
+  if (remaining > totalMax) return null;
+  if (remaining <= 0) {
+    const result: Record<string, number> = {};
+    available.forEach(a => { result[a.key] = 0; });
+    return result;
+  }
 
-  const keys   = ['cardio', 'strength', 'core'] as const;
-  const maxes  = { cardio: EVENT_MAX.cardio, strength: EVENT_MAX.strength, core: EVENT_MAX.core };
-  const exact  = keys.map(k => (maxes[k] / MAX_OTHERS) * remaining);
+  const exact  = available.map(a => (a.max / totalMax) * remaining);
   const floors = exact.map(v => Math.floor(v));
   const deficit = remaining - floors.reduce((s, v) => s + v, 0);
   const rems   = exact.map((v, i) => ({ i, r: v - floors[i] }));
   rems.sort((a, b) => b.r - a.r);
   rems.slice(0, deficit).forEach(({ i }) => { floors[i]++; });
-  return { cardio: floors[0], strength: floors[1], core: floors[2] };
+
+  const result: Record<string, number> = {};
+  available.forEach((a, i) => { result[a.key] = floors[i]; });
+  return result;
 }
 
 interface GoalLookupProps {
@@ -51,6 +58,7 @@ interface GoalLookupProps {
   strengthType: string;
   coreType: string;
   whtrScore: number;
+  exemptions: Exemptions;
 }
 
 export function GoalLookup({
@@ -61,6 +69,7 @@ export function GoalLookup({
   strengthType,
   coreType,
   whtrScore,
+  exemptions,
 }: GoalLookupProps) {
   const [selectedTier, setSelectedTier] = useState(75);
 
@@ -79,26 +88,63 @@ export function GoalLookup({
     plank:    'Plank',
   };
 
-  const remaining = selectedTier - whtrScore;
-  const dist      = distributeRemaining(remaining);
-  const impossible = dist === null;
+  // Build list of non-exempt scored components for distribution
+  // WHtR is anchored (uses current score), so it's never distributed — only subtracted
+  // Walk contributes 0 scored points, so if cardio is Walk it acts like an exempt from scoring
+  const whtrContribution = exemptions.whtr ? 0 : whtrScore;
+
+  const available: { key: string; max: number }[] = [];
+  if (!exemptions.cardio && cardioType !== 'walk') {
+    available.push({ key: 'cardio', max: COMPONENT_MAX.cardio });
+  }
+  if (!exemptions.strength) {
+    available.push({ key: 'strength', max: COMPONENT_MAX.strength });
+  }
+  if (!exemptions.core) {
+    available.push({ key: 'core', max: COMPONENT_MAX.core });
+  }
+
+  const totalScoredMax = (exemptions.whtr ? 0 : COMPONENT_MAX.whtr) +
+    available.reduce((s, a) => s + a.max, 0);
+
+  // The target raw points needed from the distributable components
+  // (selectedTier is a percentage, so target raw = selectedTier/100 * totalScoredMax)
+  const targetRaw = Math.ceil((selectedTier / 100) * totalScoredMax);
+  const remaining = targetRaw - whtrContribution;
+
+  const dist = available.length > 0 ? distributeRemaining(remaining, available) : null;
+  const impossible = dist === null || (available.length === 0 && remaining > 0);
 
   const cardioPts   = dist?.cardio   ?? 0;
   const strengthPts = dist?.strength ?? 0;
   const corePts     = dist?.core     ?? 0;
-  const totalPts    = whtrScore + (cardioType === 'walk' ? 0 : cardioPts) + strengthPts + corePts;
+  const earnedProjected = whtrContribution + cardioPts + strengthPts + corePts;
+  const projectedScore = totalScoredMax > 0
+    ? Math.round((earnedProjected / totalScoredMax) * 100)
+    : 0;
 
-  const cardioVal   = !impossible && cardioType !== 'walk' && getTable(TABLE_MAP[cardioType as keyof typeof TABLE_MAP])
+  const cardioVal   = !impossible && !exemptions.cardio && cardioType !== 'walk' && getTable(TABLE_MAP[cardioType as keyof typeof TABLE_MAP])
     ? getValueForScore(getTable(TABLE_MAP[cardioType as keyof typeof TABLE_MAP])!, colIdx, cardioPts)
     : null;
-  const strengthVal = !impossible && getTable(TABLE_MAP[strengthType as keyof typeof TABLE_MAP])
+  const strengthVal = !impossible && !exemptions.strength && getTable(TABLE_MAP[strengthType as keyof typeof TABLE_MAP])
     ? getValueForScore(getTable(TABLE_MAP[strengthType as keyof typeof TABLE_MAP])!, colIdx, strengthPts)
     : null;
-  const coreVal     = !impossible && getTable(TABLE_MAP[coreType as keyof typeof TABLE_MAP])
+  const coreVal     = !impossible && !exemptions.core && getTable(TABLE_MAP[coreType as keyof typeof TABLE_MAP])
     ? getValueForScore(getTable(TABLE_MAP[coreType as keyof typeof TABLE_MAP])!, colIdx, corePts)
     : null;
 
-  const walkThreshold = cardioType === 'walk' ? getWalkThreshold(ageGroup, gender) : null;
+  const walkThreshold = cardioType === 'walk' && !exemptions.cardio ? getWalkThreshold(ageGroup, gender) : null;
+
+  const allExempt = exemptions.whtr && exemptions.cardio && exemptions.strength && exemptions.core;
+
+  if (allExempt) {
+    return (
+      <section className="goal-lookup">
+        <h2 className="section-title">What Do I Need?</h2>
+        <p className="all-exempt-warning">All components are exempt — no assessment to score.</p>
+      </section>
+    );
+  }
 
   return (
     <section className="goal-lookup">
@@ -119,8 +165,7 @@ export function GoalLookup({
 
       {impossible && (
         <p className="goal-impossible-note">
-          Your current WHtR score ({whtrScore} pts) is not enough to reach {selectedTier} —
-          you need at least {selectedTier - MAX_OTHERS} pts from WHtR to make this tier possible.
+          Your current scores are not enough to reach {selectedTier} with the available components.
         </p>
       )}
 
@@ -131,41 +176,55 @@ export function GoalLookup({
           <span>Points</span>
         </div>
 
-        {/* WHtR — anchored to current score */}
-        <div className="goal-row goal-row-anchor">
-          <span className="goal-event">
-            WHtR
-            <span className="goal-anchor-badge" style={{ padding: '0.1rem 0.2rem', marginLeft: '4px' }}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                style={{ verticalAlign: 'middle' }}
-              >
-                <path d="M12 22V8"/>
-                <path d="M5 12H2a10 10 0 0 0 20 0h-3"/>
-                <circle cx="12" cy="5" r="3"/>
-              </svg>
+        {/* WHtR */}
+        {exemptions.whtr ? (
+          <div className="goal-row">
+            <span className="goal-event">WHtR</span>
+            <span className="goal-val" style={{ color: 'var(--af-gold)' }}>EXEMPT</span>
+            <span className="goal-pts">—</span>
+          </div>
+        ) : (
+          <div className="goal-row goal-row-anchor">
+            <span className="goal-event">
+              WHtR
+              <span className="goal-anchor-badge" style={{ padding: '0.1rem 0.2rem', marginLeft: '4px' }}>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  style={{ verticalAlign: 'middle' }}
+                >
+                  <path d="M12 22V8"/>
+                  <path d="M5 12H2a10 10 0 0 0 20 0h-3"/>
+                  <circle cx="12" cy="5" r="3"/>
+                </svg>
+              </span>
             </span>
-          </span>
-          <span className={`goal-val ${whtrScore > 0 ? 'highlight-good' : 'score-none'}`}>
-            {whtrScore > 0 ? 'current score' : 'not entered'}
-          </span>
-          <span className="goal-pts">{whtrScore} pts</span>
-        </div>
+            <span className={`goal-val ${whtrScore > 0 ? 'highlight-good' : 'score-none'}`}>
+              {whtrScore > 0 ? 'current score' : 'not entered'}
+            </span>
+            <span className="goal-pts">{whtrScore} pts</span>
+          </div>
+        )}
 
         {/* Cardio */}
-        {cardioType === 'walk' ? (
+        {exemptions.cardio ? (
+          <div className="goal-row">
+            <span className="goal-event">{cardioLabel[cardioType] ?? 'Cardio'}</span>
+            <span className="goal-val" style={{ color: 'var(--af-gold)' }}>EXEMPT</span>
+            <span className="goal-pts">—</span>
+          </div>
+        ) : cardioType === 'walk' ? (
           <div className="goal-row">
             <span className="goal-event">{cardioLabel[cardioType]}</span>
             <span className="goal-val highlight-min">
-              {walkThreshold != null ? `≤ ${formatValue(walkThreshold, 'walk')}` : '—'}
+              {walkThreshold != null ? `\u2264 ${formatValue(walkThreshold, 'walk')}` : '\u2014'}
             </span>
             <span className="goal-pts goal-pass-required">Must PASS</span>
           </div>
@@ -173,46 +232,62 @@ export function GoalLookup({
           <div className="goal-row">
             <span className="goal-event">{cardioLabel[cardioType] ?? cardioType}</span>
             <span className="goal-val highlight-good">
-              {impossible ? '—' : cardioVal != null
-                ? `${getTable(TABLE_MAP[cardioType as keyof typeof TABLE_MAP])?.isLowerBetter ? '≤' : '≥'} ${formatValue(cardioVal, cardioType)}`
-                : '—'}
+              {impossible ? '\u2014' : cardioVal != null
+                ? `${getTable(TABLE_MAP[cardioType as keyof typeof TABLE_MAP])?.isLowerBetter ? '\u2264' : '\u2265'} ${formatValue(cardioVal, cardioType)}`
+                : '\u2014'}
             </span>
-            <span className="goal-pts">{impossible ? '—' : `${cardioPts} pts`}</span>
+            <span className="goal-pts">{impossible ? '\u2014' : `${cardioPts} pts`}</span>
           </div>
         )}
 
         {/* Strength */}
-        <div className="goal-row">
-          <span className="goal-event">{strengthLabel[strengthType] ?? strengthType}</span>
-          <span className="goal-val highlight-good">
-            {impossible ? '—' : strengthVal != null ? `≥ ${formatValue(strengthVal, strengthType)}` : '—'}
-          </span>
-          <span className="goal-pts">{impossible ? '—' : `${strengthPts} pts`}</span>
-        </div>
+        {exemptions.strength ? (
+          <div className="goal-row">
+            <span className="goal-event">{strengthLabel[strengthType] ?? strengthType}</span>
+            <span className="goal-val" style={{ color: 'var(--af-gold)' }}>EXEMPT</span>
+            <span className="goal-pts">—</span>
+          </div>
+        ) : (
+          <div className="goal-row">
+            <span className="goal-event">{strengthLabel[strengthType] ?? strengthType}</span>
+            <span className="goal-val highlight-good">
+              {impossible ? '\u2014' : strengthVal != null ? `\u2265 ${formatValue(strengthVal, strengthType)}` : '\u2014'}
+            </span>
+            <span className="goal-pts">{impossible ? '\u2014' : `${strengthPts} pts`}</span>
+          </div>
+        )}
 
         {/* Core */}
-        <div className="goal-row">
-          <span className="goal-event">{coreLabel[coreType] ?? coreType}</span>
-          <span className="goal-val highlight-good">
-            {impossible ? '—' : coreVal != null
-              ? `${getTable(TABLE_MAP[coreType as keyof typeof TABLE_MAP])?.isLowerBetter ? '≤' : '≥'} ${formatValue(coreVal, coreType)}`
-              : '—'}
-          </span>
-          <span className="goal-pts">{impossible ? '—' : `${corePts} pts`}</span>
-        </div>
+        {exemptions.core ? (
+          <div className="goal-row">
+            <span className="goal-event">{coreLabel[coreType] ?? coreType}</span>
+            <span className="goal-val" style={{ color: 'var(--af-gold)' }}>EXEMPT</span>
+            <span className="goal-pts">—</span>
+          </div>
+        ) : (
+          <div className="goal-row">
+            <span className="goal-event">{coreLabel[coreType] ?? coreType}</span>
+            <span className="goal-val highlight-good">
+              {impossible ? '\u2014' : coreVal != null
+                ? `${getTable(TABLE_MAP[coreType as keyof typeof TABLE_MAP])?.isLowerBetter ? '\u2264' : '\u2265'} ${formatValue(coreVal, coreType)}`
+                : '\u2014'}
+            </span>
+            <span className="goal-pts">{impossible ? '\u2014' : `${corePts} pts`}</span>
+          </div>
+        )}
 
         {/* Total */}
         <div className="goal-total-row">
           <span className="goal-total-label">Projected Total</span>
-          <span className={`goal-total-pts ${!impossible && totalPts >= 75 ? 'highlight-min' : 'score-fail'}`}>
-            {impossible ? 'N/A' : `${totalPts} pts`}
+          <span className={`goal-total-pts ${!impossible && projectedScore >= 75 ? 'highlight-min' : 'score-fail'}`}>
+            {impossible ? 'N/A' : `${projectedScore} pts (rescaled)`}
           </span>
         </div>
       </div>
 
-      {cardioType === 'walk' && (
+      {cardioType === 'walk' && !exemptions.cardio && (
         <p className="goal-walk-note">
-          Walk is pass/fail — your total score is based on the other three events.
+          Walk is pass/fail — your total score is based on the other scored events.
         </p>
       )}
     </section>

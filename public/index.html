@@ -421,6 +421,25 @@
       cursor: pointer;
     }
 
+    .mock-subtitle {
+      font-size: 0.5rem;
+      color: #94A3B8;
+    }
+
+    .mock-shuttle-time {
+      font-size: 0.55rem;
+      color: #38BDF8;
+      font-weight: 600;
+      margin-top: 0.25rem;
+    }
+
+    .mock-offline-label {
+      font-size: 0.5rem;
+      color: #475569;
+      text-align: center;
+      margin-top: auto;
+    }
+
     /* Support Form Section */
     .support {
       background: var(--card-bg);
@@ -604,21 +623,21 @@
           <div class="phone-notch"></div>
           <div class="mock-header">
             <h4>AF PFRA</h4>
-            <p style="font-size: 0.5rem; color: #94A3B8;">HAMR TRAINER</p>
+            <p class="mock-subtitle">HAMR TRAINER</p>
           </div>
           <div class="mock-player">
             <div class="mock-circle">
               <span class="mock-shuttle">42</span>
               <span class="mock-level">Level 5</span>
             </div>
-            <div style="font-size: 0.55rem; color: #38BDF8; font-weight: 600; margin-top: 0.25rem;">SHUTTLE TIME: 0:08</div>
+            <div class="mock-shuttle-time">SHUTTLE TIME: 0:08</div>
             <div class="mock-play-btn">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="#0A1128">
                 <path d="M8 5v14l11-7z"/>
               </svg>
             </div>
           </div>
-          <div style="font-size: 0.5rem; color: #475569; text-align: center; margin-top: auto;">Offline Audio Player</div>
+          <div class="mock-offline-label">Offline Audio Player</div>
         </div>
       </div>
     </section>

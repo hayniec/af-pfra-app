@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import './index.css';
 import rawScoringData from './scoringData.json';
-import type { ScoringTable } from './types';
+import type { ScoringTable, Exemptions } from './types';
+import { DEFAULT_EXEMPTIONS } from './types';
 import {
   AGE_GROUPS,
   TABLE_MAP,
@@ -60,6 +61,12 @@ function App() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [savedFeedback, setSavedFeedback] = useState(false);
   const { entries, save, remove, clearAll, importEntries } = useHistory();
+
+  const [exemptions, setExemptions] = useState<Exemptions>(DEFAULT_EXEMPTIONS);
+
+  const toggleExempt = (component: keyof Exemptions) => {
+    setExemptions(prev => ({ ...prev, [component]: !prev[component] }));
+  };
 
   // Initialize event types & values from profile.lastValues if rememberLastValues is enabled
   const [cardioType, setCardioType] = useState<string>(() =>
@@ -133,11 +140,40 @@ function App() {
     return { threshold, passed };
   }, [cardioType, cardioValue, ageGroup, gender]);
 
-  const totalScore = Math.round(cardioScore + strengthScore + coreScore + whtrScore);
-  const cardioPass = cardioType === 'walk'
+  const isAllExempt = exemptions.whtr && exemptions.cardio && exemptions.strength && exemptions.core;
+
+  const cardioMax = exemptions.cardio || cardioType === 'walk' ? 0 : 50;
+  const scoredMax =
+    (exemptions.whtr ? 0 : 20) +
+    cardioMax +
+    (exemptions.strength ? 0 : 15) +
+    (exemptions.core ? 0 : 15);
+
+  const earnedPts =
+    (exemptions.whtr ? 0 : whtrScore) +
+    (exemptions.cardio ? 0 : cardioScore) +
+    (exemptions.strength ? 0 : strengthScore) +
+    (exemptions.core ? 0 : coreScore);
+
+  const isPassFailOnly = !isAllExempt && scoredMax === 0;
+
+  const totalScore = scoredMax > 0
+    ? Math.round(((earnedPts / scoredMax) * 100) * 10) / 10
+    : 0;
+
+  const cardioPass = exemptions.cardio
+    ? true
+    : cardioType === 'walk'
     ? (walkPassFail?.passed === true)
     : cardioScore > 0;
-  const isPass = totalScore >= PASS_THRESHOLD && cardioPass && strengthScore > 0 && coreScore > 0;
+  const strengthPass = exemptions.strength || strengthScore > 0;
+  const corePass = exemptions.core || coreScore > 0;
+
+  const isPass = isAllExempt
+    ? false
+    : isPassFailOnly
+    ? (walkPassFail?.passed === true)
+    : (totalScore >= PASS_THRESHOLD && cardioPass && strengthPass && corePass);
 
   const whtrThresholds = useMemo(() => {
     const table = getTable(TABLE_MAP.whtr);
@@ -230,7 +266,7 @@ function App() {
     }
   };
 
-  const canSave = totalScore > 0;
+  const canSave = !isAllExempt && (isPassFailOnly ? walkPassFail?.passed !== null : (earnedPts > 0 || totalScore > 0));
 
   const handleSave = () => {
     save({
@@ -242,6 +278,7 @@ function App() {
       compositeScore: totalScore,
       passed: isPass,
       whtrScore, cardioScore, strengthScore, coreScore,
+      exemptions,
     });
     setSavedFeedback(true);
     setTimeout(() => setSavedFeedback(false), 2000);
@@ -313,6 +350,8 @@ function App() {
           onHeightChange={handleHeightChange}
           waistValue={waistValue}
           onWaistChange={handleWaistChange}
+          exempt={exemptions.whtr}
+          onToggleExempt={() => toggleExempt('whtr')}
         />
 
         <GoalLookup
@@ -323,6 +362,7 @@ function App() {
           strengthType={strengthType}
           coreType={coreType}
           whtrScore={whtrScore}
+          exemptions={exemptions}
         />
 
         <EventInput
@@ -341,9 +381,11 @@ function App() {
           walkPassFail={walkPassFail}
           hamrLevel={hamrLevel}
           paceInfo={runPace}
+          exempt={exemptions.cardio}
+          onToggleExempt={() => toggleExempt('cardio')}
         />
-        {cardioType === 'hamr' && <HamrPlayer onComplete={(shuttles) => handleCardioValueChange(shuttles)} />}
-        {cardioType === 'run' && <RunTracker onComplete={(secs) => handleCardioValueChange(secs)} />}
+        {!exemptions.cardio && cardioType === 'hamr' && <HamrPlayer onComplete={(shuttles) => handleCardioValueChange(shuttles)} />}
+        {!exemptions.cardio && cardioType === 'run' && <RunTracker onComplete={(secs) => handleCardioValueChange(secs)} />}
 
         <EventInput
           key={strengthType}
@@ -358,6 +400,8 @@ function App() {
           thresholds={strengthThresholds}
           valueType={strengthType}
           score={strengthScore}
+          exempt={exemptions.strength}
+          onToggleExempt={() => toggleExempt('strength')}
         />
 
         <EventInput
@@ -373,31 +417,57 @@ function App() {
           thresholds={coreThresholds}
           valueType={coreType}
           score={coreScore}
+          exempt={exemptions.core}
+          onToggleExempt={() => toggleExempt('core')}
         />
       </div>
 
       <div className="score-display animate-fade-in delay-3" aria-live="polite">
         <p className="score-label">Composite Score</p>
-        <h2>{totalScore.toFixed(1)}</h2>
-        <div className={`score-status ${isPass ? (totalScore >= 90 ? 'status-excellent' : 'status-pass') : 'status-fail'}`}>
-          {isPass ? (totalScore >= 90 ? 'Excellent' : 'Satisfactory') : 'Unsatisfactory'}
-        </div>
+        {isAllExempt ? (
+          <div className="all-exempt-warning" style={{ margin: '1rem 0' }}>
+            <strong>All Components Exempt</strong>
+            <p style={{ margin: '0.5rem 0 0', fontSize: '0.85rem', opacity: 0.85 }}>
+              No fitness components remain to assess. Airman has a full medical exemption.
+            </p>
+          </div>
+        ) : isPassFailOnly ? (
+          <>
+            <h2>PASS / FAIL</h2>
+            <div className={`score-status ${walkPassFail?.passed === true ? 'status-pass' : 'status-fail'}`}>
+              {walkPassFail?.passed === true ? 'Satisfactory' : (walkPassFail?.passed === false ? 'Unsatisfactory' : 'Walk Time Required')}
+            </div>
+          </>
+        ) : (
+          <>
+            <h2>{totalScore.toFixed(1)}</h2>
+            <div className={`score-status ${isPass ? (totalScore >= 90 ? 'status-excellent' : 'status-pass') : 'status-fail'}`}>
+              {isPass ? (totalScore >= 90 ? 'Excellent' : 'Satisfactory') : 'Unsatisfactory'}
+            </div>
+          </>
+        )}
         <div className="score-breakdown">
-          <div className="component-score">
+          <div className={`component-score ${exemptions.whtr ? 'component-exempt' : ''}`}>
             <span className="component-label">WHtR Score:</span>
-            <span className="component-value">{whtrScore.toFixed(1)} / 20</span>
+            <span className="component-value">{exemptions.whtr ? 'Exempt' : `${whtrScore.toFixed(1)} / 20`}</span>
           </div>
-          <div className="component-score">
+          <div className={`component-score ${exemptions.cardio ? 'component-exempt' : ''}`}>
             <span className="component-label">Cardio Score:</span>
-            <span className="component-value">{cardioScore.toFixed(1)} / 50</span>
+            <span className="component-value">
+              {exemptions.cardio
+                ? 'Exempt'
+                : cardioType === 'walk'
+                ? (walkPassFail?.passed === true ? 'Pass' : walkPassFail?.passed === false ? 'Fail' : 'Walk (P/F)')
+                : `${cardioScore.toFixed(1)} / 50`}
+            </span>
           </div>
-          <div className="component-score">
+          <div className={`component-score ${exemptions.strength ? 'component-exempt' : ''}`}>
             <span className="component-label">Strength Score:</span>
-            <span className="component-value">{strengthScore.toFixed(1)} / 15</span>
+            <span className="component-value">{exemptions.strength ? 'Exempt' : `${strengthScore.toFixed(1)} / 15`}</span>
           </div>
-          <div className="component-score">
+          <div className={`component-score ${exemptions.core ? 'component-exempt' : ''}`}>
             <span className="component-label">Core Score:</span>
-            <span className="component-value">{coreScore.toFixed(1)} / 15</span>
+            <span className="component-value">{exemptions.core ? 'Exempt' : `${coreScore.toFixed(1)} / 15`}</span>
           </div>
         </div>
 

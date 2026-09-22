@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TIME_BASED_EVENTS, validateEvent, formatValue, HAMR_LEVELS } from '../scoring';
 import type { KeyThresholds } from '../types';
 
@@ -22,6 +22,8 @@ interface EventInputProps {
   walkPassFail?: { threshold: number; passed: boolean | null } | null;
   hamrLevel?: { level: number; shuttle: number; totalInLevel: number } | null;
   paceInfo?: { perMile: string } | null;
+  exempt?: boolean;
+  onToggleExempt?: () => void;
 }
 
 function TimeInput({
@@ -33,18 +35,25 @@ function TimeInput({
   onChange: (v: number) => void;
   onTouch: () => void;
 }) {
-  const mins = Math.floor(value / 60);
-  const secs = value % 60;
+  const [minsRaw, setMinsRaw] = useState(() => value > 0 ? String(Math.floor(value / 60)) : '');
+  const [secsRaw, setSecsRaw] = useState(() => value > 0 ? String(value % 60).padStart(2, '0') : '');
+
+  const update = (m: string, s: string) => {
+    const mNum = parseInt(m) || 0;
+    const sNum = parseInt(s) || 0;
+    onChange(mNum * 60 + sNum);
+  };
 
   return (
     <div className="time-input-group">
       <input
         type="number"
         min={0}
-        value={mins}
+        value={minsRaw}
         onChange={(e) => {
           onTouch();
-          onChange(Math.max(0, Number(e.target.value) || 0) * 60 + secs);
+          setMinsRaw(e.target.value);
+          update(e.target.value, secsRaw);
         }}
         aria-label="Minutes"
         placeholder="MM"
@@ -54,10 +63,16 @@ function TimeInput({
         type="number"
         min={0}
         max={59}
-        value={secs}
+        value={secsRaw}
         onChange={(e) => {
           onTouch();
-          onChange(mins * 60 + Math.min(59, Math.max(0, Number(e.target.value) || 0)));
+          let val = e.target.value;
+          if (val.length > 2) val = val.slice(-2);
+          setSecsRaw(val);
+          update(minsRaw, val);
+        }}
+        onBlur={() => {
+          if (secsRaw !== '') setSecsRaw(secsRaw.padStart(2, '0'));
         }}
         aria-label="Seconds"
         placeholder="SS"
@@ -97,18 +112,36 @@ export function EventInput({
   walkPassFail,
   hamrLevel,
   paceInfo,
+  exempt = false,
+  onToggleExempt,
 }: EventInputProps) {
   const [touched, setTouched] = useState(false);
   const [rawInput, setRawInput] = useState(() => value > 0 ? String(value) : '');
+
+  // Keep rawInput in sync with value prop (e.g. when switching event types)
+  useEffect(() => {
+    setRawInput(value > 0 ? String(value) : '');
+  }, [value]);
+
   const timeBased = TIME_BASED_EVENTS.includes(selectedType);
   const error = touched ? validateEvent(selectedType, value) : null;
   const labelId = `label-${sectionLabel.toLowerCase().replace(/\W+/g, '-')}`;
 
   return (
     <div className="form-group">
-      <label id={labelId}>
-        {sectionLabel} ({maxPts} PTS)
-      </label>
+      <div className="exempt-header">
+        <label id={labelId}>
+          {sectionLabel} ({maxPts} PTS){exempt && <span className="exempt-badge" style={{ marginLeft: '0.5rem' }}>Exempt</span>}
+        </label>
+        {onToggleExempt && (
+          <label className={`exempt-toggle ${exempt ? 'active' : ''}`}>
+            <input type="checkbox" checked={exempt} onChange={onToggleExempt} />
+            Exempt
+          </label>
+        )}
+      </div>
+
+      <div className={`exempt-section-body ${exempt ? 'collapsed' : 'expanded'}`}>
 
       {options && options.length > 1 && (
         <div className="toggle-group toggle-group-mb" role="group" aria-labelledby={labelId}>
@@ -126,7 +159,7 @@ export function EventInput({
       )}
 
       {timeBased ? (
-        <TimeInput value={value} onChange={onChange} onTouch={() => setTouched(true)} />
+        <TimeInput key={selectedType} value={value} onChange={onChange} onTouch={() => setTouched(true)} />
       ) : (
         <input
           type="number"
@@ -139,6 +172,11 @@ export function EventInput({
             onChange(isNaN(num) ? 0 : num);
           }}
           onBlur={() => setTouched(true)}
+          onFocus={() => {
+            if (rawInput === '0') {
+              setRawInput('');
+            }
+          }}
           aria-label={placeholder}
           aria-invalid={!!error}
           step={selectedType === 'whtr' ? '0.01' : '1'}
@@ -214,6 +252,7 @@ export function EventInput({
           <span className="pace-item">{paceInfo.perMile}<span className="pace-unit">/mi</span></span>
         </div>
       )}
+      </div>{/* end exempt-section-body */}
     </div>
   );
 }

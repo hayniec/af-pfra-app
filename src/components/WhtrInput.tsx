@@ -11,6 +11,8 @@ interface WhtrInputProps {
   onHeightChange?: (height: number | null, unit: 'in' | 'cm') => void;
   waistValue?: number | null;
   onWaistChange?: (waist: number | null) => void;
+  exempt?: boolean;
+  onToggleExempt?: () => void;
 }
 
 function scoreColorClass(score: number, thresholds: KeyThresholds): string {
@@ -38,6 +40,8 @@ export function WhtrInput({
   onHeightChange,
   waistValue,
   onWaistChange,
+  exempt = false,
+  onToggleExempt,
 }: WhtrInputProps) {
   const [unit, setUnit] = useState<'in' | 'cm'>(heightUnit);
   const [heightRaw, setHeightRaw] = useState(heightValue ? String(heightValue) : '');
@@ -102,8 +106,19 @@ export function WhtrInput({
 
   return (
     <div className="form-group">
+      <div className="exempt-header">
+        <label>Waist-to-Height Ratio (20 PTS){exempt && <span className="exempt-badge" style={{ marginLeft: '0.5rem' }}>Exempt</span>}</label>
+        {onToggleExempt && (
+          <label className={`exempt-toggle ${exempt ? 'active' : ''}`}>
+            <input type="checkbox" checked={exempt} onChange={onToggleExempt} />
+            Exempt
+          </label>
+        )}
+      </div>
+
+      <div className={`exempt-section-body ${exempt ? 'collapsed' : 'expanded'}`}>
       <div className="whtr-header">
-        <label>Waist-to-Height Ratio (20 PTS)</label>
+        <div />
         <div className="toggle-group" role="group" aria-label="Unit">
           {(['in', 'cm'] as const).map(u => (
             <button
@@ -128,8 +143,8 @@ export function WhtrInput({
             min={0}
             step={unit === 'in' ? '0.5' : '1'}
             placeholder={unit === 'in' ? 'e.g. 70' : 'e.g. 178'}
-            value={heightRaw}
             onChange={(e) => handleHeightInput(e.target.value)}
+            onFocus={() => { if (heightRaw === '0') setHeightRaw(''); }}
             onBlur={() => setTouched(true)}
           />
         </div>
@@ -143,6 +158,7 @@ export function WhtrInput({
             placeholder={unit === 'in' ? 'e.g. 34' : 'e.g. 86'}
             value={waistRaw}
             onChange={(e) => handleWaistInput(e.target.value)}
+            onFocus={() => { if (waistRaw === '0') setWaistRaw(''); }}
             onBlur={() => setTouched(true)}
           />
         </div>
@@ -187,6 +203,7 @@ export function WhtrInput({
           )}
         </div>
       )}
+      </div>{/* end exempt-section-body */}
     </div>
   );
 }

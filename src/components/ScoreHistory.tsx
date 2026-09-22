@@ -1,5 +1,9 @@
 import { useRef } from 'react';
-import type { HistoryEntry } from '../types';
+import { Share } from '@capacitor/share';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Capacitor } from '@capacitor/core';
+import type { HistoryEntry, Exemptions } from '../types';
+import { DEFAULT_EXEMPTIONS } from '../types';
 import { formatValue } from '../scoring';
 
 interface ScoreHistoryProps {
@@ -35,7 +39,7 @@ function fallbackDownload(csv: string, filename: string) {
   URL.revokeObjectURL(url);
 }
 
-function exportCSV(entries: HistoryEntry[]) {
+async function exportCSV(entries: HistoryEntry[]) {
   const headers = [
     // Human-readable columns (for spreadsheets)
     'Date', 'Time', 'Gender', 'Age Group',
@@ -49,6 +53,7 @@ function exportCSV(entries: HistoryEntry[]) {
     '_coreType', '_coreValue',
     '_compositeScore', '_passed',
     '_whtrScore', '_cardioScore', '_strengthScore', '_coreScore',
+    '_exemptWhtr', '_exemptCardio', '_exemptStrength', '_exemptCore',
   ];
 
   const rows = entries.map(e => [
@@ -72,6 +77,10 @@ function exportCSV(entries: HistoryEntry[]) {
     e.coreType, e.coreValue,
     e.compositeScore, e.passed ? '1' : '0',
     e.whtrScore, e.cardioScore, e.strengthScore, e.coreScore,
+    (e.exemptions?.whtr ? '1' : '0'),
+    (e.exemptions?.cardio ? '1' : '0'),
+    (e.exemptions?.strength ? '1' : '0'),
+    (e.exemptions?.core ? '1' : '0'),
   ]);
 
   const csv = [headers, ...rows]
@@ -80,30 +89,30 @@ function exportCSV(entries: HistoryEntry[]) {
 
   const filename = `pfra-scores-${new Date().toISOString().slice(0, 10)}.csv`;
 
-  // Use Web Share API if supported (native container WKWebView / Android WebView)
-  if (navigator.share && navigator.canShare) {
+  // Use Capacitor Native Share if on Android/iOS
+  if (Capacitor.isNativePlatform()) {
     try {
-      const file = new File([csv], filename, { type: 'text/csv;charset=utf-8;' });
-      if (navigator.canShare({ files: [file] })) {
-        navigator.share({
-          files: [file],
-          title: 'PFRA Scores Export',
-          text: 'Air Force PFRA Calculator Score History'
-        }).then(() => {
-          console.log('Share completed successfully');
-        }).catch(err => {
-          // If the user cancelled or aborted the share, do not trigger download fallback
-          if (err.name !== 'AbortError' && err.name !== 'NotAllowedError') {
-            fallbackDownload(csv, filename);
-          }
-        });
-        return;
-      }
+      // Write file to cache directory so it can be shared
+      const result = await Filesystem.writeFile({
+        path: filename,
+        data: csv,
+        directory: Directory.Cache,
+        encoding: 'utf8' as any
+      });
+
+      await Share.share({
+        title: 'PFRA Scores Export',
+        text: 'Air Force PFRA Calculator Score History',
+        url: result.uri,
+      });
+      return;
     } catch (e) {
-      console.error('Web Share failed, falling back to download:', e);
+      console.error('Native Share failed', e);
+      // Fall through to standard web fallback
     }
   }
 
+  // Web fallback (for browser/testing)
   fallbackDownload(csv, filename);
 }
 
@@ -147,6 +156,12 @@ function parseCSV(text: string): HistoryEntry[] {
     if (cells.length < headers.length) continue;
     const get = (name: string) => cells[col(name)] ?? '';
     try {
+      const exemptions: Exemptions = {
+        whtr:     get('_exemptWhtr') === '1',
+        cardio:   get('_exemptCardio') === '1',
+        strength: get('_exemptStrength') === '1',
+        core:     get('_exemptCore') === '1',
+      };
       entries.push({
         id:             get('_id') || Date.now().toString() + i,
         savedAt:        get('_savedAt'),
@@ -165,6 +180,7 @@ function parseCSV(text: string): HistoryEntry[] {
         cardioScore:    Number(get('_cardioScore')),
         strengthScore:  Number(get('_strengthScore')),
         coreScore:      Number(get('_coreScore')),
+        exemptions,
       });
     } catch {
       // skip malformed rows
@@ -231,6 +247,8 @@ export function ScoreHistory({ entries, onRemove, onClearAll, onImport }: ScoreH
             const prev = entries[idx + 1];
             const delta = prev ? entry.compositeScore - prev.compositeScore : null;
 
+            const ex = entry.exemptions ?? DEFAULT_EXEMPTIONS;
+
             return (
               <div key={entry.id} className={`history-entry ${entry.passed ? 'entry-pass' : 'entry-fail'}`}>
                 <div className="history-entry-top">
@@ -264,21 +282,27 @@ export function ScoreHistory({ entries, onRemove, onClearAll, onImport }: ScoreH
                 </div>
 
                 <div className="history-breakdown">
-                  <span className="history-stat">WHtR {entry.whtrScore.toFixed(0)}</span>
+                  <span className="history-stat">
+                    WHtR {ex.whtr ? <span className="history-exempt-badge">EX</span> : entry.whtrScore.toFixed(0)}
+                  </span>
                   <span className="history-sep">·</span>
                   <span className="history-stat">
                     {EVENT_LABELS[entry.cardioType] ?? entry.cardioType}{' '}
-                    {entry.cardioType === 'walk'
-                      ? formatValue(entry.cardioValue, 'walk')
-                      : entry.cardioScore.toFixed(0) + ' pts'}
+                    {ex.cardio
+                      ? <span className="history-exempt-badge">EX</span>
+                      : entry.cardioType === 'walk'
+                        ? formatValue(entry.cardioValue, 'walk')
+                        : entry.cardioScore.toFixed(0) + ' pts'}
                   </span>
                   <span className="history-sep">·</span>
                   <span className="history-stat">
-                    {EVENT_LABELS[entry.strengthType] ?? entry.strengthType} {entry.strengthScore.toFixed(0)}
+                    {EVENT_LABELS[entry.strengthType] ?? entry.strengthType}{' '}
+                    {ex.strength ? <span className="history-exempt-badge">EX</span> : entry.strengthScore.toFixed(0)}
                   </span>
                   <span className="history-sep">·</span>
                   <span className="history-stat">
-                    {EVENT_LABELS[entry.coreType] ?? entry.coreType} {entry.coreScore.toFixed(0)}
+                    {EVENT_LABELS[entry.coreType] ?? entry.coreType}{' '}
+                    {ex.core ? <span className="history-exempt-badge">EX</span> : entry.coreScore.toFixed(0)}
                   </span>
                 </div>
 
