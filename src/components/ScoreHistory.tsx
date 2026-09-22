@@ -264,21 +264,21 @@ export function ScoreHistory({ entries, onRemove, onClearAll, onImport }: ScoreH
                 </div>
 
                 <div className="history-breakdown">
-                  <span className="history-stat">WHtR {entry.whtrScore.toFixed(0)}</span>
+                  <span className="history-stat">WHtR {entry.whtrScore.toFixed(1)}</span>
                   <span className="history-sep">·</span>
                   <span className="history-stat">
                     {EVENT_LABELS[entry.cardioType] ?? entry.cardioType}{' '}
                     {entry.cardioType === 'walk'
                       ? formatValue(entry.cardioValue, 'walk')
-                      : entry.cardioScore.toFixed(0) + ' pts'}
+                      : entry.cardioScore.toFixed(1) + ' pts'}
                   </span>
                   <span className="history-sep">·</span>
                   <span className="history-stat">
-                    {EVENT_LABELS[entry.strengthType] ?? entry.strengthType} {entry.strengthScore.toFixed(0)}
+                    {EVENT_LABELS[entry.strengthType] ?? entry.strengthType} {entry.strengthScore.toFixed(1)}
                   </span>
                   <span className="history-sep">·</span>
                   <span className="history-stat">
-                    {EVENT_LABELS[entry.coreType] ?? entry.coreType} {entry.coreScore.toFixed(0)}
+                    {EVENT_LABELS[entry.coreType] ?? entry.coreType} {entry.coreScore.toFixed(1)}
                   </span>
                 </div>
 

@@ -13,6 +13,9 @@ import {
   getWalkBracket,
   getWalkThreshold,
   getHamrLevel,
+  calculateComposite,
+  roundWhtr,
+  PASS_THRESHOLD,
 } from './scoring';
 
 const scoringData = rawScoringData as ScoringTable[];
@@ -360,4 +363,100 @@ describe('getHamrLevel', () => {
   it('returns level 16 for shuttles beyond level 15', () => {
     expect(getHamrLevel(200)!.level).toBe(16);
   });
+});
+
+// ---- Composite score ----
+
+describe('calculateComposite', () => {
+  it('keeps half-points instead of rounding to a whole number', () => {
+    // 35 + 4.5 + 15 + 20 = 74.5 — a fail that used to round up to 75 and "pass"
+    expect(calculateComposite(35, 4.5, 15, 20)).toBe(74.5);
+    expect(calculateComposite(35, 4.5, 15, 20) >= PASS_THRESHOLD).toBe(false);
+  });
+
+  it('passes at exactly 75.0', () => {
+    expect(calculateComposite(35, 5, 15, 20)).toBe(75);
+    expect(calculateComposite(35, 5, 15, 20) >= PASS_THRESHOLD).toBe(true);
+  });
+
+  it('does not accumulate float drift', () => {
+    expect(calculateComposite(38.5, 12.5, 7.5, 12.5)).toBe(71);
+    expect(calculateComposite(49.5, 14.5, 14.5, 19)).toBe(97.5);
+  });
+
+  it('sums a perfect assessment to 100', () => {
+    expect(calculateComposite(50, 15, 15, 20)).toBe(100);
+  });
+});
+
+// ---- WHtR rounding ----
+
+describe('roundWhtr', () => {
+  it('rounds a measured ratio to the charted hundredth', () => {
+    expect(roundWhtr(34.5 / 70)).toBe(0.49);   // 0.4929
+    expect(roundWhtr(36 / 70)).toBe(0.51);     // 0.5143
+    expect(roundWhtr(0.495)).toBe(0.5);
+  });
+
+  it('leaves an exact hundredth untouched', () => {
+    expect(roundWhtr(0.49)).toBe(0.49);
+    expect(roundWhtr(0.6)).toBe(0.6);
+  });
+
+  it('scores a 34.5in waist on a 70in frame as 20 pts, not 19', () => {
+    const table = getTable(TABLE_MAP.whtr);
+    expect(calculateScore(table, 0, roundWhtr(34.5 / 70))).toBe(20);
+  });
+});
+
+// ---- Chart-wide boundary regression (all 8 events x 18 age/gender columns) ----
+
+describe('every charted threshold scores its own row', () => {
+  const EVENTS = Object.keys(TABLE_MAP) as (keyof typeof TABLE_MAP)[];
+
+  for (const event of EVENTS) {
+    it(`${event}: each row's value scores that row across all 18 columns`, () => {
+      const table = getTable(TABLE_MAP[event]);
+      expect(table.rows[0].values).toHaveLength(18);
+
+      for (let col = 0; col < 18; col++) {
+        for (const row of table.rows) {
+          const threshold = row.values[col];
+          // adjacent rows sometimes share a threshold — the higher score wins
+          const expected = Math.max(
+            ...table.rows.filter(r => r.values[col] === threshold).map(r => r.score),
+          );
+          expect(calculateScore(table, col, threshold)).toBe(expected);
+        }
+      }
+    });
+
+    it(`${event}: performance just short of the minimum scores 0`, () => {
+      const table = getTable(TABLE_MAP[event]);
+      const scoring = table.rows.filter(r => r.score > 0);
+      const minRow = scoring.reduce((a, b) => (a.score <= b.score ? a : b));
+
+      for (let col = 0; col < 18; col++) {
+        const justShort = table.isLowerBetter
+          ? minRow.values[col] + (event === 'whtr' ? 0.01 : 1)
+          : minRow.values[col] - 1;
+        expect(calculateScore(table, col, justShort)).toBe(0);
+      }
+    });
+
+    it(`${event}: score never decreases as performance improves`, () => {
+      const table = getTable(TABLE_MAP[event]);
+      for (let col = 0; col < 18; col++) {
+        const ordered = [...table.rows]
+          .map(r => r.values[col])
+          .sort((a, b) => (table.isLowerBetter ? b - a : a - b)); // worst -> best
+        let prev = -1;
+        for (const v of ordered) {
+          const score = calculateScore(table, col, v);
+          expect(score).toBeGreaterThanOrEqual(prev);
+          prev = score;
+        }
+      }
+    });
+  }
 });

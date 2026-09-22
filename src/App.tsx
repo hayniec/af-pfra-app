@@ -9,6 +9,8 @@ import {
   DEFAULT_VALUES,
   getColIdx,
   calculateScore,
+  calculateComposite,
+  roundWhtr,
   getKeyThresholds,
   getWalkThreshold,
   getHamrLevel,
@@ -107,7 +109,7 @@ function App() {
 
   const whtrScore = useMemo(() => {
     const table = getTable(TABLE_MAP.whtr);
-    return table ? calculateScore(table, colIdx, whtrValue) : 0;
+    return table ? calculateScore(table, colIdx, roundWhtr(whtrValue)) : 0;
   }, [whtrValue, colIdx]);
 
   const cardioScore = useMemo(() => {
@@ -133,7 +135,7 @@ function App() {
     return { threshold, passed };
   }, [cardioType, cardioValue, ageGroup, gender]);
 
-  const totalScore = Math.round(cardioScore + strengthScore + coreScore + whtrScore);
+  const totalScore = calculateComposite(cardioScore, strengthScore, coreScore, whtrScore);
   const cardioPass = cardioType === 'walk'
     ? (walkPassFail?.passed === true)
     : cardioScore > 0;

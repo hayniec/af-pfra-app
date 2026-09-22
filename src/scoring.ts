@@ -165,6 +165,21 @@ export function getKeyThresholds(table: ScoringTable, colIdx: number): KeyThresh
   };
 }
 
+/** WHtR is charted in hundredths (0.49, 0.50, 0.51 ...), so a measured ratio is
+ *  rounded to two decimals before lookup. Without this, a 34.5" waist on a 70"
+ *  frame (0.4929) would fall through to the 0.50 row and lose a point. */
+export function roundWhtr(ratio: number): number {
+  return Math.round((ratio + Number.EPSILON) * 100) / 100;
+}
+
+/** Sums the four component scores. Components are awarded in half-points, so the
+ *  composite legitimately lands on .5 — it is kept to one decimal (guarding against
+ *  float drift) and never rounded to a whole number: 74.5 is a fail, not a pass. */
+export function calculateComposite(...components: number[]): number {
+  const sum = components.reduce((total, pts) => total + pts, 0);
+  return Math.round(sum * 10) / 10;
+}
+
 export function formatValue(val: number, type: string): string {
   if (TIME_BASED_EVENTS.includes(type)) {
     const mins = Math.floor(val / 60);
