@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import './index.css';
 import rawScoringData from './scoringData.json';
 import type { ScoringTable, Exemptions } from './types';
@@ -18,6 +18,7 @@ import {
 } from './scoring';
 import { HamrPlayer } from './components/HamrPlayer';
 import { RunTracker } from './components/RunTracker';
+import { PlankTimer } from './components/PlankTimer';
 import { GoalLookup } from './components/GoalLookup';
 import { ScoreHistory } from './components/ScoreHistory';
 import { EventInput } from './components/EventInput';
@@ -64,6 +65,21 @@ function App() {
   const { entries, save, remove, clearAll, importEntries } = useHistory();
 
   const [exemptions, setExemptions] = useState<Exemptions>(DEFAULT_EXEMPTIONS);
+  const [assessmentType, setAssessmentType] = useState<'official' | 'diagnostic'>('official');
+
+  // Outdoor / High-Contrast Track Sunlight Theme
+  const [theme, setTheme] = useState<'dark' | 'outdoor'>(() => {
+    return (localStorage.getItem('pfra_theme') as 'dark' | 'outdoor') || 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('pfra_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'outdoor' : 'dark'));
+  };
 
   const toggleExempt = (component: keyof Exemptions) => {
     setExemptions(prev => ({ ...prev, [component]: !prev[component] }));
@@ -260,8 +276,8 @@ function App() {
     }
   };
 
-  const handleHeightChange = (height: number | null, unit: 'in' | 'cm') => {
-    updateProfile({ height, heightUnit: unit });
+  const handleHeightChange = (height: number | null) => {
+    updateProfile({ height, heightUnit: 'in' });
   };
 
   const handleWaistChange = (waist: number | null) => {
@@ -284,6 +300,7 @@ function App() {
       passed: isPass,
       whtrScore, cardioScore, strengthScore, coreScore,
       exemptions,
+      assessmentType,
     });
     setSavedFeedback(true);
     setTimeout(() => setSavedFeedback(false), 2000);
@@ -291,8 +308,19 @@ function App() {
 
   return (
     <div className="container">
-      <header className="animate-fade-in">
-        <h1>AIR FORCE PFRA</h1>
+      <header className="animate-fade-in header-container">
+        <div className="header-top-row">
+          <h1>AIR FORCE PFRA</h1>
+          <button
+            type="button"
+            className="theme-toggle-btn"
+            onClick={toggleTheme}
+            aria-label="Toggle Track Sunlight Mode"
+            title="Toggle Outdoor / Track Sunlight High-Contrast Mode"
+          >
+            {theme === 'outdoor' ? '🌙 Dark Mode' : '☀️ Track Mode'}
+          </button>
+        </div>
         <p>Physical Fitness Readiness Assessment Calculator</p>
       </header>
 
@@ -351,7 +379,6 @@ function App() {
           thresholds={whtrThresholds}
           score={whtrScore}
           heightValue={profile.height}
-          heightUnit={profile.heightUnit}
           onHeightChange={handleHeightChange}
           waistValue={waistValue}
           onWaistChange={handleWaistChange}
@@ -425,6 +452,12 @@ function App() {
           exempt={exemptions.core}
           onToggleExempt={() => toggleExempt('core')}
         />
+        {!exemptions.core && coreType === 'plank' && (
+          <PlankTimer
+            initialSeconds={coreValue}
+            onApplyTime={(secs) => handleCoreValueChange(secs)}
+          />
+        )}
       </div>
 
       <div className="score-display animate-fade-in delay-3" aria-live="polite">
@@ -476,12 +509,35 @@ function App() {
           </div>
         </div>
 
+        <div className="assessment-type-container">
+          <div className="assessment-type-header">
+            <span className="assessment-type-label">Assessment Type</span>
+            <span className="assessment-type-hint">(AFMAN 36-2905 §3.8)</span>
+          </div>
+          <div className="type-toggle-group">
+            <button
+              type="button"
+              className={`type-toggle-btn ${assessmentType === 'official' ? 'active' : ''}`}
+              onClick={() => setAssessmentType('official')}
+            >
+              ★ Official PFRA
+            </button>
+            <button
+              type="button"
+              className={`type-toggle-btn ${assessmentType === 'diagnostic' ? 'active' : ''}`}
+              onClick={() => setAssessmentType('diagnostic')}
+            >
+              🎯 Diagnostic (DPFRA)
+            </button>
+          </div>
+        </div>
+
         <button
           className={`save-btn ${savedFeedback ? 'save-btn-saved' : ''}`}
           onClick={handleSave}
           disabled={!canSave || savedFeedback}
         >
-          {savedFeedback ? '✓ Saved!' : 'Save Results'}
+          {savedFeedback ? '✓ Saved!' : `Save ${assessmentType === 'diagnostic' ? 'Diagnostic' : 'Official'} Results`}
         </button>
       </div>
 

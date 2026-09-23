@@ -1706,3 +1706,446 @@ input:checked + .slider:before {
   vertical-align: middle;
 }
 
+/* ==========================================================================
+   Outdoor / High-Contrast Track Sunlight Theme
+   ========================================================================== */
+[data-theme="outdoor"] {
+  --bg-dark: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f8fafc;
+  --text-main: #0f172a;
+  --text-muted: #475569;
+  --accent-blue: #0284c7;
+  --accent-green: #059669;
+  --accent-red: #dc2626;
+  --af-blue: #0369a1;
+  --af-blue-light: #0284c7;
+}
+
+[data-theme="outdoor"] body {
+  background-color: #f1f5f9;
+  background-image: none;
+  color: #0f172a;
+}
+
+[data-theme="outdoor"] .card {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  border: 1px solid #cbd5e1;
+}
+
+[data-theme="outdoor"] .input-group input,
+[data-theme="outdoor"] select,
+[data-theme="outdoor"] input[type="number"],
+[data-theme="outdoor"] input[type="text"] {
+  background-color: #f8fafc;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+[data-theme="outdoor"] .score-display {
+  background: #ffffff;
+  border: 2px solid #0284c7;
+  box-shadow: 0 8px 24px rgba(2, 132, 199, 0.12);
+}
+
+[data-theme="outdoor"] .score-status.status-excellent {
+  background: #059669;
+  color: #ffffff;
+}
+
+[data-theme="outdoor"] .score-status.status-pass {
+  background: #0284c7;
+  color: #ffffff;
+}
+
+[data-theme="outdoor"] .score-status.status-fail {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+/* Header with Theme Switcher */
+.header-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.header-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.theme-toggle-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-main);
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+[data-theme="outdoor"] .theme-toggle-btn {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* ==========================================================================
+   Diagnostic PFRA (DPFRA) Selector & Badges
+   ========================================================================== */
+.assessment-type-container {
+  margin: 1.25rem 0;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="outdoor"] .assessment-type-container {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.assessment-type-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.assessment-type-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-main);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.assessment-type-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.type-toggle-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.type-toggle-btn {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.type-toggle-btn.active {
+  background: var(--af-blue-light);
+  border-color: var(--accent-blue);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.2);
+}
+
+[data-theme="outdoor"] .type-toggle-btn {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+[data-theme="outdoor"] .type-toggle-btn.active {
+  background: #0284c7;
+  border-color: #0369a1;
+  color: #ffffff;
+}
+
+/* History Filter Tabs & Badges */
+.history-filter-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.history-filter-tab {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.history-filter-tab:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-main);
+}
+
+.history-filter-tab.active {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+  color: #0f172a;
+}
+
+[data-theme="outdoor"] .history-filter-tab {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+
+[data-theme="outdoor"] .history-filter-tab.active {
+  background: #0284c7;
+  border-color: #0284c7;
+  color: #ffffff;
+}
+
+.history-type-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.badge-official {
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent-blue);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.badge-diagnostic {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* ==========================================================================
+   Plank Stopwatch Timer
+   ========================================================================== */
+.plank-timer-card {
+  margin-top: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.04);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+[data-theme="outdoor"] .plank-timer-card {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+}
+
+.plank-timer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.plank-timer-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  color: var(--accent-blue);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.plank-interval-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.plank-timer-display-row {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.plank-timer-digit {
+  font-size: 2.25rem;
+  font-weight: 700;
+  font-family: monospace;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.plank-milestone-pill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--accent-green);
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  animation: fadeIn 0.3s ease;
+}
+
+.plank-timer-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.btn-timer-start {
+  background: var(--accent-blue);
+  color: #0f172a;
+}
+
+.btn-timer-start:hover {
+  background: #7dd3fc;
+}
+
+.btn-timer-pause {
+  background: #f59e0b;
+  color: #0f172a;
+}
+
+.btn-timer-apply {
+  background: var(--accent-green);
+  color: #0f172a;
+}
+
+.btn-timer-apply:hover {
+  background: #34d399;
+}
+
+.btn-timer-reset {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-timer-reset:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text-main);
+}
+
+/* ==========================================================================
+   HAMR Dual Input (Total Shuttles OR Level & Shuttle 2-Way Sync)
+   ========================================================================== */
+.hamr-dual-input-container {
+  margin-bottom: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+}
+
+[data-theme="outdoor"] .hamr-dual-input-container {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.hamr-dual-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+@media (max-width: 600px) {
+  .hamr-dual-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.hamr-input-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.hamr-input-sublabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hamr-total-input {
+  width: 100%;
+}
+
+.hamr-sync-divider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.25rem;
+  color: var(--accent-blue);
+  font-weight: 700;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.hamr-sync-symbol {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.hamr-sync-text {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.hamr-selectors-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.hamr-select {
+  flex: 1;
+  padding: 0.65rem 0.5rem;
+  font-size: 0.85rem;
+}
+
+.hamr-separator {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+
+

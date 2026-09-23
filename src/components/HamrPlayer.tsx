@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { HAMR_LEVELS, getHamrIntervalMs } from '../scoring';
+import { hapticMedium, hapticPulsePattern } from '../utils/haptics';
 
 type PlayerStatus = 'idle' | 'running' | 'done';
 
@@ -40,8 +41,10 @@ export function HamrPlayer({ onComplete }: { onComplete?: (shuttles: number) => 
       scheduleBeep(ctx, t,        1047, 0.25);
       scheduleBeep(ctx, t + 0.35, 1047, 0.25);
       scheduleBeep(ctx, t + 0.70, 1047, 0.25);
+      hapticPulsePattern([100, 100, 100, 100, 150]);
     } else {
       scheduleBeep(ctx, t, 880, 0.20);
+      hapticMedium();
     }
   };
 

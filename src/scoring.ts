@@ -113,6 +113,29 @@ export function getHamrLevel(shuttles: number): { level: number; shuttle: number
   return { level: 16, shuttle: shuttles - last.end, totalInLevel: 0 };
 }
 
+/**
+ * Calculates total cumulative HAMR shuttles given a level and shuttle number within that level.
+ * Example: Level 1, Shuttle 1 -> 1. Level 6, Shuttle 9 -> 50.
+ */
+export function getHamrShuttles(level: number, shuttleInLevel: number): number {
+  if (level < 1) return 0;
+  if (level > HAMR_LEVELS.length) {
+    const last = HAMR_LEVELS[HAMR_LEVELS.length - 1];
+    return last.end + Math.max(1, shuttleInLevel);
+  }
+  const lvl = HAMR_LEVELS[level - 1];
+  const maxInLvl = lvl.end - lvl.start + 1;
+  const clamped = Math.max(1, Math.min(shuttleInLevel, maxInLvl));
+  return lvl.start + clamped - 1;
+}
+
+/** Returns the total number of shuttles in a given HAMR level. */
+export function getMaxShuttlesInLevel(level: number): number {
+  if (level < 1 || level > HAMR_LEVELS.length) return 10;
+  const lvl = HAMR_LEVELS[level - 1];
+  return lvl.end - lvl.start + 1;
+}
+
 // ---- HAMR beep timing (20m shuttle run, standard beep-test speeds) ----
 
 const HAMR_SPEEDS_KMH = [

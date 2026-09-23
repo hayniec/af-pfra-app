@@ -14,6 +14,8 @@ import {
   getWalkThreshold,
   getHamrLevel,
   roundWhtr,
+  getHamrShuttles,
+  getMaxShuttlesInLevel,
 } from './scoring';
 
 const scoringData = rawScoringData as ScoringTable[];
@@ -445,3 +447,40 @@ describe('WHtR with no measurement entered', () => {
   });
 
 });
+describe('getHamrShuttles & 2-way conversion', () => {
+  it('converts level 1, shuttle 1 to 1 total shuttle', () => {
+    expect(getHamrShuttles(1, 1)).toBe(1);
+  });
+
+  it('converts level 1, shuttle 7 to 7 total shuttles', () => {
+    expect(getHamrShuttles(1, 7)).toBe(7);
+  });
+
+  it('converts level 2, shuttle 1 to 8 total shuttles', () => {
+    expect(getHamrShuttles(2, 1)).toBe(8);
+  });
+
+  it('converts level 6, shuttle 9 to 50 total shuttles', () => {
+    expect(getHamrShuttles(6, 9)).toBe(50);
+  });
+
+  it('converts level 15, shuttle 13 to 155 total shuttles', () => {
+    expect(getHamrShuttles(15, 13)).toBe(155);
+  });
+
+  it('is a perfect roundtrip with getHamrLevel for all levels and shuttles', () => {
+    for (let shuttles = 1; shuttles <= 155; shuttles++) {
+      const lvlInfo = getHamrLevel(shuttles)!;
+      const convertedBack = getHamrShuttles(lvlInfo.level, lvlInfo.shuttle);
+      expect(convertedBack).toBe(shuttles);
+    }
+  });
+
+  it('returns max shuttles per level correctly', () => {
+    expect(getMaxShuttlesInLevel(1)).toBe(7);
+    expect(getMaxShuttlesInLevel(2)).toBe(8);
+    expect(getMaxShuttlesInLevel(6)).toBe(9);
+    expect(getMaxShuttlesInLevel(15)).toBe(13);
+  });
+});
+

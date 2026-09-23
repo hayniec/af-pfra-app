@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
@@ -42,12 +42,12 @@ function fallbackDownload(csv: string, filename: string) {
 async function exportCSV(entries: HistoryEntry[]) {
   const headers = [
     // Human-readable columns (for spreadsheets)
-    'Date', 'Time', 'Gender', 'Age Group',
+    'Date', 'Time', 'Type', 'Gender', 'Age Group',
     'Composite Score', 'Result',
     'WHtR Score', 'Cardio Type', 'Cardio Score',
     'Strength Type', 'Strength Score', 'Core Type', 'Core Score',
     // Raw columns (prefixed with _ — used for re-import)
-    '_id', '_savedAt', '_gender', '_ageGroup',
+    '_id', '_savedAt', '_assessmentType', '_gender', '_ageGroup',
     '_cardioType', '_cardioValue', '_whtrValue',
     '_strengthType', '_strengthValue',
     '_coreType', '_coreValue',
@@ -59,6 +59,7 @@ async function exportCSV(entries: HistoryEntry[]) {
   const rows = entries.map(e => [
     formatDate(e.savedAt),
     formatTime(e.savedAt),
+    e.assessmentType === 'diagnostic' ? 'Diagnostic' : 'Official',
     e.gender === 'male' ? 'Male' : 'Female',
     e.ageGroup === '<25' ? 'Under 25' : e.ageGroup,
     e.compositeScore,
@@ -71,7 +72,7 @@ async function exportCSV(entries: HistoryEntry[]) {
     EVENT_LABELS[e.coreType] ?? e.coreType,
     e.coreScore.toFixed(1),
     // Raw data
-    e.id, e.savedAt, e.gender, e.ageGroup,
+    e.id, e.savedAt, e.assessmentType ?? 'official', e.gender, e.ageGroup,
     e.cardioType, e.cardioValue, e.whtrValue,
     e.strengthType, e.strengthValue,
     e.coreType, e.coreValue,
@@ -162,9 +163,13 @@ function parseCSV(text: string): HistoryEntry[] {
         strength: get('_exemptStrength') === '1',
         core:     get('_exemptCore') === '1',
       };
+      const assessmentTypeVal = get('_assessmentType');
+      const assessmentType: 'official' | 'diagnostic' = assessmentTypeVal === 'diagnostic' ? 'diagnostic' : 'official';
+
       entries.push({
         id:             get('_id') || Date.now().toString() + i,
         savedAt:        get('_savedAt'),
+        assessmentType,
         gender:         get('_gender'),
         ageGroup:       get('_ageGroup'),
         cardioType:     get('_cardioType'),
@@ -191,6 +196,16 @@ function parseCSV(text: string): HistoryEntry[] {
 
 export function ScoreHistory({ entries, onRemove, onClearAll, onImport }: ScoreHistoryProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [filter, setFilter] = useState<'all' | 'official' | 'diagnostic'>('all');
+
+  const officialCount = entries.filter(e => (e.assessmentType ?? 'official') === 'official').length;
+  const diagnosticCount = entries.filter(e => e.assessmentType === 'diagnostic').length;
+
+  const filteredEntries = entries.filter(e => {
+    if (filter === 'official') return (e.assessmentType ?? 'official') === 'official';
+    if (filter === 'diagnostic') return e.assessmentType === 'diagnostic';
+    return true;
+  });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -238,16 +253,47 @@ export function ScoreHistory({ entries, onRemove, onClearAll, onImport }: ScoreH
         </div>
       </div>
 
-      {entries.length === 0 ? (
-        <p className="history-empty">No saved results yet. Complete your assessment and click "Save Results" to track your progress.</p>
+      {entries.length > 0 && (
+        <div className="history-filter-tabs">
+          <button
+            type="button"
+            className={`history-filter-tab ${filter === 'all' ? 'active' : ''}`}
+            onClick={() => setFilter('all')}
+          >
+            All ({entries.length})
+          </button>
+          <button
+            type="button"
+            className={`history-filter-tab ${filter === 'official' ? 'active' : ''}`}
+            onClick={() => setFilter('official')}
+          >
+            Official ({officialCount})
+          </button>
+          <button
+            type="button"
+            className={`history-filter-tab ${filter === 'diagnostic' ? 'active' : ''}`}
+            onClick={() => setFilter('diagnostic')}
+          >
+            Diagnostic ({diagnosticCount})
+          </button>
+        </div>
+      )}
+
+      {filteredEntries.length === 0 ? (
+        <p className="history-empty">
+          {entries.length === 0
+            ? 'No saved results yet. Complete your assessment and click "Save Results" to track your progress.'
+            : `No ${filter} assessments found.`}
+        </p>
       ) : (
         <div className="history-list">
-          {entries.map((entry, idx) => {
-            const isLatest = idx === 0;
-            const prev = entries[idx + 1];
+          {filteredEntries.map((entry, idx) => {
+            const isLatest = idx === 0 && filter === 'all';
+            const prev = filteredEntries[idx + 1];
             const delta = prev ? entry.compositeScore - prev.compositeScore : null;
 
             const ex = entry.exemptions ?? DEFAULT_EXEMPTIONS;
+            const isDiagnostic = entry.assessmentType === 'diagnostic';
 
             return (
               <div key={entry.id} className={`history-entry ${entry.passed ? 'entry-pass' : 'entry-fail'}`}>
@@ -255,6 +301,9 @@ export function ScoreHistory({ entries, onRemove, onClearAll, onImport }: ScoreH
                   <div className="history-meta">
                     <span className="history-date">{formatDate(entry.savedAt)}</span>
                     <span className="history-time">{formatTime(entry.savedAt)}</span>
+                    <span className={`history-type-badge ${isDiagnostic ? 'badge-diagnostic' : 'badge-official'}`}>
+                      {isDiagnostic ? 'DIAGNOSTIC' : 'OFFICIAL'}
+                    </span>
                     {isLatest && <span className="history-latest-badge">Latest</span>}
                   </div>
                   <button
