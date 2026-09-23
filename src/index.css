@@ -312,6 +312,17 @@ option {
   margin-bottom: 0.5rem;
 }
 
+/* Prorated total — shown when a component is exempt or unscored */
+.score-prorated {
+  font-size: 0.9rem;
+  opacity: 0.85;
+  margin: -0.5rem 0 0.75rem;
+}
+
+.score-prorated-note {
+  opacity: 0.7;
+}
+
 /* Score breakdown box */
 .score-breakdown {
   margin-top: 2rem;
@@ -921,6 +932,28 @@ option {
   font-size: 0.85rem;
   color: var(--text-muted);
   margin: 0.1rem 0 0.75rem;
+}
+
+.whtr-exempt-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0.25rem 0 0.75rem;
+  cursor: pointer;
+}
+
+.whtr-exempt-toggle input {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+}
+
+.whtr-exempt-note {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0 0 0.75rem;
 }
 
 .whtr-ratio-value {

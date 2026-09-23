@@ -10,6 +10,7 @@ import {
   DEFAULT_VALUES,
   getColIdx,
   calculateScore,
+  roundWhtr,
   getKeyThresholds,
   getWalkThreshold,
   getHamrLevel,
@@ -129,8 +130,12 @@ function App() {
   const colIdx = useMemo(() => getColIdx(ageGroup, gender), [ageGroup, gender]);
 
   const whtrScore = useMemo(() => {
+    // No measurement yet — a ratio of 0 is "not entered", not a perfect 0.49
+    if (whtrValue <= 0) return 0;
     const table = getTable(TABLE_MAP.whtr);
-    return table ? calculateScore(table, colIdx, whtrValue) : 0;
+    // The chart is written in hundredths, so the measured ratio is rounded to two
+    // decimals before lookup — otherwise 34.5"/70" (0.4929) falls to the 0.50 row.
+    return table ? calculateScore(table, colIdx, roundWhtr(whtrValue)) : 0;
   }, [whtrValue, colIdx]);
 
   const cardioScore = useMemo(() => {

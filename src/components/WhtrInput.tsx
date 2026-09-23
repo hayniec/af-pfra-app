@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { formatValue } from '../scoring';
+import { formatValue, roundWhtr } from '../scoring';
 import type { KeyThresholds } from '../types';
 
 interface WhtrInputProps {
@@ -139,6 +139,7 @@ export function WhtrInput({
       {hasValues && !error && (
         <p className="whtr-ratio-display">
           Ratio: <span className="whtr-ratio-value">{ratio.toFixed(3)}</span>
+          {' '}(scored as {formatValue(roundWhtr(ratio), 'whtr')})
         </p>
       )}
 

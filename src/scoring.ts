@@ -188,6 +188,13 @@ export function getKeyThresholds(table: ScoringTable, colIdx: number): KeyThresh
   };
 }
 
+/** WHtR is charted in hundredths (0.49, 0.50, 0.51 ...), so a measured ratio is
+ *  rounded to two decimals before lookup. Without this, a 34.5" waist on a 70"
+ *  frame (0.4929) would fall through to the 0.50 row and lose a point. */
+export function roundWhtr(ratio: number): number {
+  return Math.round((ratio + Number.EPSILON) * 100) / 100;
+}
+
 export function formatValue(val: number, type: string): string {
   if (TIME_BASED_EVENTS.includes(type)) {
     const mins = Math.floor(val / 60);
