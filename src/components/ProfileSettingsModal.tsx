@@ -33,21 +33,6 @@ export function ProfileSettingsModal({
     onUpdateProfile({ height: isNaN(num) || num <= 0 ? null : num });
   };
 
-  const handleUnitToggle = (unit: 'in' | 'cm') => {
-    if (unit === profile.heightUnit) return;
-    // Optionally convert height number if present
-    let convertedHeight = profile.height;
-    if (profile.height !== null && profile.height > 0) {
-      if (unit === 'cm' && profile.heightUnit === 'in') {
-        convertedHeight = Math.round(profile.height * 2.54 * 10) / 10;
-      } else if (unit === 'in' && profile.heightUnit === 'cm') {
-        convertedHeight = Math.round((profile.height / 2.54) * 10) / 10;
-      }
-    }
-    setHeightInput(convertedHeight !== null ? String(convertedHeight) : '');
-    onUpdateProfile({ heightUnit: unit, height: convertedHeight });
-  };
-
   return (
     <div className="modal-backdrop" onClick={onClose} role="presentation">
       <div
@@ -95,27 +80,13 @@ export function ProfileSettingsModal({
           </div>
 
           <div className="form-group">
-            <div className="whtr-header" style={{ marginBottom: '0.5rem' }}>
-              <label htmlFor="settings-height">Height ({profile.heightUnit})</label>
-              <div className="toggle-group" role="group" aria-label="Height Unit">
-                {(['in', 'cm'] as const).map((u) => (
-                  <button
-                    key={u}
-                    type="button"
-                    className={`toggle-btn ${profile.heightUnit === u ? 'active' : ''}`}
-                    onClick={() => handleUnitToggle(u)}
-                  >
-                    {u}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <label htmlFor="settings-height">Height (inches)</label>
             <input
               id="settings-height"
               type="number"
               min={0}
-              step={profile.heightUnit === 'in' ? '0.5' : '1'}
-              placeholder={profile.heightUnit === 'in' ? 'e.g. 70' : 'e.g. 178'}
+              step="0.5"
+              placeholder="e.g. 70"
               value={heightInput}
               onChange={handleHeightChange}
             />

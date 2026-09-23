@@ -7,8 +7,7 @@ interface WhtrInputProps {
   thresholds?: KeyThresholds | null;
   score?: number;
   heightValue?: number | null;
-  heightUnit?: 'in' | 'cm';
-  onHeightChange?: (height: number | null, unit: 'in' | 'cm') => void;
+  onHeightChange?: (height: number | null) => void;
   waistValue?: number | null;
   onWaistChange?: (waist: number | null) => void;
   exempt?: boolean;
@@ -36,23 +35,15 @@ export function WhtrInput({
   thresholds,
   score,
   heightValue,
-  heightUnit = 'in',
   onHeightChange,
   waistValue,
   onWaistChange,
   exempt = false,
   onToggleExempt,
 }: WhtrInputProps) {
-  const [unit, setUnit] = useState<'in' | 'cm'>(heightUnit);
   const [heightRaw, setHeightRaw] = useState(heightValue ? String(heightValue) : '');
   const [waistRaw, setWaistRaw] = useState(waistValue ? String(waistValue) : '');
   const [touched, setTouched] = useState(false);
-
-  useEffect(() => {
-    if (heightUnit !== undefined) {
-      setUnit(heightUnit);
-    }
-  }, [heightUnit]);
 
   useEffect(() => {
     if (heightValue !== undefined) {
@@ -78,19 +69,12 @@ export function WhtrInput({
     onChange(error ? 0 : ratio);
   }, [ratio, error]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleUnitChange = (newUnit: 'in' | 'cm') => {
-    setUnit(newUnit);
-    if (onHeightChange) {
-      onHeightChange(heightNum > 0 ? heightNum : null, newUnit);
-    }
-  };
-
   const handleHeightInput = (val: string) => {
     setTouched(true);
     setHeightRaw(val);
     const num = parseFloat(val);
     if (onHeightChange) {
-      onHeightChange(!isNaN(num) && num > 0 ? num : null, unit);
+      onHeightChange(!isNaN(num) && num > 0 ? num : null);
     }
   };
 
@@ -102,7 +86,6 @@ export function WhtrInput({
       onWaistChange(!isNaN(num) && num > 0 ? num : null);
     }
   };
-
 
   return (
     <div className="form-group">
@@ -117,45 +100,29 @@ export function WhtrInput({
       </div>
 
       <div className={`exempt-section-body ${exempt ? 'collapsed' : 'expanded'}`}>
-      <div className="whtr-header">
-        <div />
-        <div className="toggle-group" role="group" aria-label="Unit">
-          {(['in', 'cm'] as const).map(u => (
-            <button
-              key={u}
-              type="button"
-              className={`toggle-btn ${unit === u ? 'active' : ''}`}
-              onClick={() => handleUnitChange(u)}
-              aria-pressed={unit === u}
-            >
-              {u}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="input-row">
+      <div className="input-row" style={{ marginTop: '0.5rem' }}>
         <div className="form-group">
-          <label htmlFor="whtr-height">Height ({unit})</label>
+          <label htmlFor="whtr-height">Height (inches)</label>
           <input
             id="whtr-height"
             type="number"
             min={0}
-            step={unit === 'in' ? '0.5' : '1'}
-            placeholder={unit === 'in' ? 'e.g. 70' : 'e.g. 178'}
+            step="0.5"
+            placeholder="e.g. 70"
+            value={heightRaw}
             onChange={(e) => handleHeightInput(e.target.value)}
             onFocus={() => { if (heightRaw === '0') setHeightRaw(''); }}
             onBlur={() => setTouched(true)}
           />
         </div>
         <div className="form-group">
-          <label htmlFor="whtr-waist">Waist ({unit})</label>
+          <label htmlFor="whtr-waist">Waist (inches)</label>
           <input
             id="whtr-waist"
             type="number"
             min={0}
-            step={unit === 'in' ? '0.5' : '1'}
-            placeholder={unit === 'in' ? 'e.g. 34' : 'e.g. 86'}
+            step="0.5"
+            placeholder="e.g. 34"
             value={waistRaw}
             onChange={(e) => handleWaistInput(e.target.value)}
             onFocus={() => { if (waistRaw === '0') setWaistRaw(''); }}

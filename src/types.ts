@@ -31,6 +31,7 @@ export interface HistoryEntry {
   strengthScore: number;
   coreScore: number;
   exemptions?: Exemptions; // backward compat: missing = all false
+  assessmentType?: 'official' | 'diagnostic'; // AFMAN 36-2905 Section 3.8
 }
 
 export interface ScoringRow {

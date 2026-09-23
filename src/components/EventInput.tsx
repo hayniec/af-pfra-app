@@ -1,5 +1,13 @@
 import { useState, useEffect } from 'react';
-import { TIME_BASED_EVENTS, validateEvent, formatValue, HAMR_LEVELS } from '../scoring';
+import {
+  TIME_BASED_EVENTS,
+  validateEvent,
+  formatValue,
+  HAMR_LEVELS,
+  getHamrShuttles,
+  getMaxShuttlesInLevel,
+  getHamrLevel,
+} from '../scoring';
 import type { KeyThresholds } from '../types';
 
 export interface EventOption {
@@ -77,6 +85,130 @@ function TimeInput({
         aria-label="Seconds"
         placeholder="SS"
       />
+    </div>
+  );
+}
+
+function HamrDualInput({
+  value,
+  onChange,
+  onTouch,
+}: {
+  value: number;
+  onChange: (val: number) => void;
+  onTouch: () => void;
+}) {
+  const levelInfo = getHamrLevel(value) || { level: 1, shuttle: 1, totalInLevel: 7 };
+  const [totalStr, setTotalStr] = useState(() => (value > 0 ? String(value) : ''));
+  const [currentLevel, setCurrentLevel] = useState(levelInfo.level);
+  const [currentShuttle, setCurrentShuttle] = useState(levelInfo.shuttle);
+
+  useEffect(() => {
+    if (value > 0) {
+      setTotalStr(String(value));
+      const info = getHamrLevel(value);
+      if (info) {
+        setCurrentLevel(info.level);
+        setCurrentShuttle(info.shuttle);
+      }
+    } else {
+      setTotalStr('');
+      setCurrentLevel(1);
+      setCurrentShuttle(1);
+    }
+  }, [value]);
+
+  const handleTotalChange = (str: string) => {
+    onTouch();
+    setTotalStr(str);
+    const num = parseInt(str, 10);
+    if (!isNaN(num) && num > 0) {
+      onChange(num);
+      const info = getHamrLevel(num);
+      if (info) {
+        setCurrentLevel(info.level);
+        setCurrentShuttle(info.shuttle);
+      }
+    } else {
+      onChange(0);
+    }
+  };
+
+  const handleLevelChange = (lvl: number) => {
+    onTouch();
+    setCurrentLevel(lvl);
+    const maxInLvl = getMaxShuttlesInLevel(lvl);
+    const shuttle = Math.min(currentShuttle, maxInLvl);
+    setCurrentShuttle(shuttle);
+    const total = getHamrShuttles(lvl, shuttle);
+    setTotalStr(String(total));
+    onChange(total);
+  };
+
+  const handleShuttleChange = (shuttle: number) => {
+    onTouch();
+    setCurrentShuttle(shuttle);
+    const total = getHamrShuttles(currentLevel, shuttle);
+    setTotalStr(String(total));
+    onChange(total);
+  };
+
+  const maxInCurrentLvl = getMaxShuttlesInLevel(currentLevel);
+
+  return (
+    <div className="hamr-dual-input-container">
+      <div className="hamr-dual-row">
+        <div className="hamr-input-box">
+          <label className="hamr-input-sublabel">Total Shuttles</label>
+          <input
+            type="number"
+            min={1}
+            max={200}
+            value={totalStr}
+            onChange={(e) => handleTotalChange(e.target.value)}
+            onFocus={() => { if (totalStr === '0') setTotalStr(''); }}
+            placeholder="e.g. 50"
+            className="hamr-total-input"
+            aria-label="Total HAMR Shuttles"
+          />
+        </div>
+
+        <div className="hamr-sync-divider">
+          <span className="hamr-sync-symbol">⇄</span>
+          <span className="hamr-sync-text">OR</span>
+        </div>
+
+        <div className="hamr-input-box">
+          <label className="hamr-input-sublabel">Level &amp; Shuttle</label>
+          <div className="hamr-selectors-row">
+            <select
+              className="hamr-select"
+              value={currentLevel}
+              onChange={(e) => handleLevelChange(Number(e.target.value))}
+              aria-label="HAMR Level"
+            >
+              {HAMR_LEVELS.map((lvl) => (
+                <option key={lvl.level} value={lvl.level}>
+                  Level {lvl.level}
+                </option>
+              ))}
+            </select>
+            <span className="hamr-separator">·</span>
+            <select
+              className="hamr-select"
+              value={currentShuttle}
+              onChange={(e) => handleShuttleChange(Number(e.target.value))}
+              aria-label="Shuttle in Level"
+            >
+              {Array.from({ length: maxInCurrentLvl }, (_, i) => i + 1).map((s) => (
+                <option key={s} value={s}>
+                  Shuttle {s} / {maxInCurrentLvl}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -160,6 +292,8 @@ export function EventInput({
 
       {timeBased ? (
         <TimeInput key={selectedType} value={value} onChange={onChange} onTouch={() => setTouched(true)} />
+      ) : selectedType === 'hamr' ? (
+        <HamrDualInput key="hamr-dual" value={value} onChange={onChange} onTouch={() => setTouched(true)} />
       ) : (
         <input
           type="number"
@@ -235,7 +369,7 @@ export function EventInput({
         </div>
       )}
 
-      {hamrLevel && (
+      {hamrLevel && selectedType !== 'hamr' && (
         <div className="hamr-level-badge">
           <span className="hamr-level-label">HAMR Level</span>
           <span className="hamr-level-value">

@@ -30,3 +30,9 @@ inspect_data.py
 android/.gradle
 android/app/build
 android/build
+
+# Media scratch files
+*.m4a
+*.mp3
+*.webp
+
