@@ -2082,6 +2082,7 @@ input:checked + .slider:before {
   padding: 0 0.25rem;
   color: var(--accent-blue);
   font-weight: 700;
+  -webkit-user-select: none;
   user-select: none;
 }
 
