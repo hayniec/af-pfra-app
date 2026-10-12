@@ -26,6 +26,13 @@ allprojects {
     }
 }
 
+subprojects {
+    apply plugin: 'kotlin-android'
+}
+
+
+
+
 task clean(type: Delete) {
     delete rootProject.layout.buildDirectory
 }

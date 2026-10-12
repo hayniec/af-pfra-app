@@ -36,3 +36,9 @@ android/build
 *.mp3
 *.webp
 
+# Keystores & Release Secrets
+key.properties
+*.jks
+*.keystore
+
+
