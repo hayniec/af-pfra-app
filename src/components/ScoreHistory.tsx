@@ -10,8 +10,9 @@ interface ScoreHistoryProps {
   entries: HistoryEntry[];
   onRemove: (id: string) => void;
   onClearAll: () => void;
-  onImport: (entries: HistoryEntry[]) => void;
+  onImport: (entries: HistoryEntry[]) => { added: number; updated: number } | void;
 }
+
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
@@ -117,11 +118,20 @@ async function exportCSV(entries: HistoryEntry[]) {
   fallbackDownload(csv, filename);
 }
 
-function parseCSV(text: string): HistoryEntry[] {
-  const lines = text.trim().split('\n');
+export function parseCSV(text: string): HistoryEntry[] {
+  if (!text || typeof text !== 'string') return [];
+  // Strip UTF-8 BOM, normalize Windows and Mac line endings (\r\n and \r to \n)
+  const clean = text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = clean.trim().split('\n').filter(l => l.trim().length > 0);
   if (lines.length < 2) return [];
 
-  // Parse a single quoted CSV cell
+  // Detect delimiter (, or ;)
+  const firstLine = lines[0] ?? '';
+  const commaCount = (firstLine.match(/,/g) || []).length;
+  const semiCount = (firstLine.match(/;/g) || []).length;
+  const delimiter = semiCount > commaCount ? ';' : ',';
+
+  // Parse a single CSV line respecting quotes
   const parseRow = (line: string): string[] => {
     const cells: string[] = [];
     let i = 0;
@@ -134,57 +144,111 @@ function parseCSV(text: string): HistoryEntry[] {
           else if (line[i] === '"') { i++; break; }
           else { val += line[i++]; }
         }
-        cells.push(val);
-        if (line[i] === ',') i++;
+        cells.push(val.trim());
+        if (line[i] === delimiter) i++;
       } else {
-        const end = line.indexOf(',', i);
-        cells.push(end === -1 ? line.slice(i) : line.slice(i, end));
+        const end = line.indexOf(delimiter, i);
+        const val = end === -1 ? line.slice(i) : line.slice(i, end);
+        cells.push(val.trim());
         i = end === -1 ? line.length : end + 1;
       }
+    }
+    if (line.endsWith(delimiter)) {
+      cells.push('');
     }
     return cells;
   };
 
-  const headers = parseRow(lines[0]);
-  const col = (name: string) => headers.indexOf(name);
+  const headers = parseRow(lines[0] ?? '').map(h => h.trim().toLowerCase());
+  const col = (name: string) => headers.indexOf(name.toLowerCase());
 
-  // Must have raw columns to import
-  if (col('_id') === -1 || col('_savedAt') === -1) return [];
+  // Check if either raw columns or human-readable columns exist
+  const hasRaw = col('_id') !== -1 || col('_savedat') !== -1 || col('_compositescore') !== -1;
+  const hasHuman = col('composite score') !== -1 || col('date') !== -1;
+  if (!hasRaw && !hasHuman) return [];
 
   const entries: HistoryEntry[] = [];
   for (let i = 1; i < lines.length; i++) {
-    const cells = parseRow(lines[i]);
-    if (cells.length < headers.length) continue;
-    const get = (name: string) => cells[col(name)] ?? '';
+    const line = lines[i];
+    if (!line) continue;
+    const cells = parseRow(line);
+    if (cells.length < 3) continue;
+    const get = (name: string): string => {
+      const idx = col(name);
+      return idx !== -1 && idx < cells.length ? (cells[idx] ?? '') : '';
+    };
+
     try {
+      const exWhtr = get('_exemptwhtr') === '1' || get('whtr score')?.toLowerCase() === 'ex';
+      const exCardio = get('_exemptcardio') === '1' || get('cardio score')?.toLowerCase() === 'ex';
+      const exStrength = get('_exemptstrength') === '1' || get('strength score')?.toLowerCase() === 'ex';
+      const exCore = get('_exemptcore') === '1' || get('core score')?.toLowerCase() === 'ex';
+
       const exemptions: Exemptions = {
-        whtr:     get('_exemptWhtr') === '1',
-        cardio:   get('_exemptCardio') === '1',
-        strength: get('_exemptStrength') === '1',
-        core:     get('_exemptCore') === '1',
+        whtr: exWhtr,
+        cardio: exCardio,
+        strength: exStrength,
+        core: exCore,
       };
-      const assessmentTypeVal = get('_assessmentType');
-      const assessmentType: 'official' | 'diagnostic' = assessmentTypeVal === 'diagnostic' ? 'diagnostic' : 'official';
+
+      const rawAssessmentType = (get('_assessmenttype') || get('type')).toLowerCase();
+      const assessmentType: 'official' | 'diagnostic' = rawAssessmentType.includes('diag') ? 'diagnostic' : 'official';
+
+      const rawGender = (get('_gender') || get('gender') || 'male').toLowerCase();
+      const gender = rawGender.includes('female') ? 'female' : 'male';
+
+      const ageGroup = get('_agegroup') || get('age group') || '<25';
+
+      let cardioType = get('_cardiotype') || get('cardio type') || 'run';
+      const cardioTypeLower = cardioType.toLowerCase();
+      if (cardioTypeLower.includes('hamr')) cardioType = 'hamr';
+      else if (cardioTypeLower.includes('walk')) cardioType = 'walk';
+      else if (cardioTypeLower.includes('run')) cardioType = 'run';
+
+      let strengthType = get('_strengthtype') || get('strength type') || 'pushup';
+      const strengthTypeLower = strengthType.toLowerCase();
+      if (strengthTypeLower.includes('hand') || strengthTypeLower.includes('hr')) strengthType = 'handrelease';
+      else if (strengthTypeLower.includes('push')) strengthType = 'pushup';
+
+      let coreType = get('_coretype') || get('core type') || 'situp';
+      const coreTypeLower = coreType.toLowerCase();
+      if (coreTypeLower.includes('plank')) coreType = 'plank';
+      else if (coreTypeLower.includes('crunch')) coreType = 'crunches';
+      else if (coreTypeLower.includes('sit')) coreType = 'situp';
+
+      const compositeScore = Number(get('_compositescore') || get('composite score')) || 0;
+      const passed = get('_passed') === '1' || get('result')?.toLowerCase().includes('pass') || compositeScore >= 75;
+
+      const rawSavedAt = get('_savedat');
+      let savedAt = new Date().toISOString();
+      if (rawSavedAt && !isNaN(Date.parse(rawSavedAt))) {
+        savedAt = new Date(rawSavedAt).toISOString();
+      } else if (get('date')) {
+        const dateStr = get('date') + (get('time') ? ' ' + get('time') : '');
+        if (!isNaN(Date.parse(dateStr))) {
+          savedAt = new Date(dateStr).toISOString();
+        }
+      }
 
       entries.push({
-        id:             get('_id') || Date.now().toString() + i,
-        savedAt:        get('_savedAt'),
+        id:             get('_id') || `import-${Date.now()}-${i}`,
+        savedAt,
         assessmentType,
-        gender:         get('_gender'),
-        ageGroup:       get('_ageGroup'),
-        cardioType:     get('_cardioType'),
-        cardioValue:    Number(get('_cardioValue')),
-        whtrValue:      Number(get('_whtrValue')),
-        strengthType:   get('_strengthType'),
-        strengthValue:  Number(get('_strengthValue')),
-        coreType:       get('_coreType'),
-        coreValue:      Number(get('_coreValue')),
-        compositeScore: Number(get('_compositeScore')),
-        passed:         get('_passed') === '1',
-        whtrScore:      Number(get('_whtrScore')),
-        cardioScore:    Number(get('_cardioScore')),
-        strengthScore:  Number(get('_strengthScore')),
-        coreScore:      Number(get('_coreScore')),
+        gender,
+        ageGroup,
+        cardioType,
+        cardioValue:    Number(get('_cardiovalue')) || Number(get('cardio score')) || 0,
+        whtrValue:      Number(get('_whtrvalue')) || 0.50,
+        strengthType,
+        strengthValue:  Number(get('_strengthvalue')) || Number(get('strength score')) || 0,
+        coreType,
+        coreValue:      Number(get('_corevalue')) || Number(get('core score')) || 0,
+        compositeScore,
+        passed,
+        whtrScore:      Number(get('_whtrscore')) || (exWhtr ? 0 : Number(get('whtr score')) || 0),
+        cardioScore:    Number(get('_cardioscore')) || (exCardio ? 0 : Number(get('cardio score')) || 0),
+        strengthScore:  Number(get('_strengthscore')) || (exStrength ? 0 : Number(get('strength score')) || 0),
+        coreScore:      Number(get('_corescore')) || (exCore ? 0 : Number(get('core score')) || 0),
         exemptions,
       });
     } catch {
@@ -197,6 +261,9 @@ function parseCSV(text: string): HistoryEntry[] {
 export function ScoreHistory({ entries, onRemove, onClearAll, onImport }: ScoreHistoryProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [filter, setFilter] = useState<'all' | 'official' | 'diagnostic'>('all');
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [pasteText, setPasteText] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const officialCount = entries.filter(e => (e.assessmentType ?? 'official') === 'official').length;
   const diagnosticCount = entries.filter(e => e.assessmentType === 'diagnostic').length;
@@ -207,21 +274,40 @@ export function ScoreHistory({ entries, onRemove, onClearAll, onImport }: ScoreH
     return true;
   });
 
+  const processImportText = (text: string) => {
+    setErrorMessage(null);
+    try {
+      const imported = parseCSV(text);
+      if (imported.length > 0) {
+        const res = onImport(imported);
+        setIsImportModalOpen(false);
+        setPasteText('');
+        if (res && 'added' in res && (res.added > 0 || res.updated > 0)) {
+          alert(`Import successful! ${res.added} new and ${res.updated} existing record(s) processed.`);
+        } else {
+          alert(`Successfully imported ${imported.length} assessment record(s)!`);
+        }
+      } else {
+        setErrorMessage('No valid assessment records found. Please ensure the CSV contains exported PFRA columns.');
+      }
+    } catch (err) {
+      console.error('Import parse error:', err);
+      setErrorMessage('Failed to parse CSV data. Please ensure it is a valid PFRA CSV export.');
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (evt) => {
       const text = evt.target?.result as string;
-      const imported = parseCSV(text);
-      if (imported.length > 0) {
-        onImport(imported);
-      } else {
-        alert('No valid entries found. Make sure you are importing a CSV exported from this app.');
-      }
+      processImportText(text);
+    };
+    reader.onerror = () => {
+      setErrorMessage('Unable to read the file directly from Google Drive. Please open the Google Drive app, tap the three dots (⋮), select "Download", and import it from your Downloads folder.');
     };
     reader.readAsText(file);
-    // Reset input so the same file can be re-selected if needed
     e.target.value = '';
   };
 
@@ -230,28 +316,179 @@ export function ScoreHistory({ entries, onRemove, onClearAll, onImport }: ScoreH
       <div className="history-header">
         <h2 className="section-title">Score History</h2>
         <div className="history-actions">
-          <button className="history-import-btn" onClick={() => fileInputRef.current?.click()}>
+          <button
+            type="button"
+            className="history-import-btn"
+            onClick={() => {
+              setErrorMessage(null);
+              setPasteText('');
+              setIsImportModalOpen(true);
+            }}
+          >
             Import CSV
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".csv"
-            style={{ display: 'none' }}
-            onChange={handleFileChange}
-          />
+
           {entries.length > 0 && (
-            <button className="history-export-btn" onClick={() => exportCSV(entries)}>
+            <button type="button" className="history-export-btn" onClick={() => exportCSV(entries)}>
               Export CSV
             </button>
           )}
           {entries.length > 1 && (
-            <button className="history-clear-btn" onClick={onClearAll}>
+            <button type="button" className="history-clear-btn" onClick={onClearAll}>
               Clear All
             </button>
           )}
         </div>
       </div>
+
+      {isImportModalOpen && (
+        <div className="modal-backdrop" onClick={() => setIsImportModalOpen(false)} role="presentation">
+          <div
+            className="modal-content card animate-fade-in"
+            onClick={e => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="import-history-title"
+          >
+            <div className="modal-header">
+              <h3 id="import-history-title" className="section-title">
+                Import Score History
+              </h3>
+              <button
+                type="button"
+                className="modal-close-btn"
+                onClick={() => setIsImportModalOpen(false)}
+                aria-label="Close modal"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-body">
+              {errorMessage && (
+                <div style={{
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  borderRadius: '8px',
+                  padding: '10px 14px',
+                  color: '#fca5a5',
+                  fontSize: '0.85rem'
+                }}>
+                  {errorMessage}
+                </div>
+              )}
+
+              {/* Option 1: File selection */}
+              <div>
+                <label style={{ display: 'block', fontWeight: 600, fontSize: '0.9rem', marginBottom: '8px' }}>
+                  Option 1: Select CSV File
+                </label>
+                <label
+                  className="history-import-btn"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    cursor: 'pointer',
+                    width: '100%',
+                    padding: '12px',
+                    fontSize: '0.95rem'
+                  }}
+                >
+                  <span>📁 Choose File (Drive, Files, Storage)</span>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv,text/csv,text/comma-separated-values,text/plain,application/csv,application/x-csv,application/vnd.ms-excel,application/octet-stream,*/*"
+                    style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }}
+                    onChange={handleFileChange}
+                  />
+                </label>
+                <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '6px' }}>
+                  Compatible with Google Drive, Files app, Downloads, and internal storage.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', margin: '4px 0', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
+                <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }}></div>
+                <span style={{ padding: '0 10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>OR</span>
+                <div style={{ flex: 1, height: '1px', background: 'rgba(255, 255, 255, 0.1)' }}></div>
+              </div>
+
+              {/* Option 2: Paste CSV Text */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                    Option 2: Paste CSV Data
+                  </label>
+                  {typeof navigator !== 'undefined' && navigator.clipboard && (
+                    <button
+                      type="button"
+                      className="history-import-btn"
+                      style={{ padding: '4px 10px', fontSize: '0.78rem' }}
+                      onClick={async () => {
+                        try {
+                          const text = await navigator.clipboard.readText();
+                          if (text) {
+                            setPasteText(text);
+                            processImportText(text);
+                          }
+                        } catch {
+                          setErrorMessage('Clipboard permission denied. Please paste manually into the text box below.');
+                        }
+                      }}
+                    >
+                      📋 Paste Clipboard
+                    </button>
+                  )}
+                </div>
+                <textarea
+                  rows={4}
+                  value={pasteText}
+                  onChange={e => setPasteText(e.target.value)}
+                  placeholder='Paste your backup CSV text here (e.g. "Date","Time",...)'
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    background: 'rgba(0, 0, 0, 0.25)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    borderRadius: '8px',
+                    padding: '10px',
+                    color: 'var(--text-main)',
+                    fontSize: '0.8rem',
+                    fontFamily: 'monospace',
+                    resize: 'vertical'
+                  }}
+                />
+                {pasteText.trim().length > 0 && (
+                  <button
+                    type="button"
+                    className="history-import-btn"
+                    style={{ width: '100%', marginTop: '8px', padding: '10px' }}
+                    onClick={() => processImportText(pasteText)}
+                  >
+                    Process & Import Pasted Data
+                  </button>
+                )}
+              </div>
+
+              {/* Tip for Google Drive users */}
+              <div style={{
+                background: 'rgba(59, 130, 246, 0.1)',
+                border: '1px solid rgba(59, 130, 246, 0.25)',
+                borderRadius: '8px',
+                padding: '10px 14px',
+                fontSize: '0.8rem',
+                color: '#93c5fd',
+                lineHeight: '1.4'
+              }}>
+                <strong>💡 Google Drive Tip:</strong> If Google Drive grays out or delays streaming the file, open your Google Drive app, tap the three dots (⋮) on the file, select <strong>Download</strong> to save it to your device's Downloads folder, and then choose it with Option 1 above.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {entries.length > 0 && (
         <div className="history-filter-tabs">

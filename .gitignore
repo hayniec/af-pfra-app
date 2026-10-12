@@ -42,7 +42,4 @@ key.properties
 *.keystore
 *.pem
 AFPFRA
-
-
-
-
+release/
