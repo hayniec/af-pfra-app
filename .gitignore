@@ -40,5 +40,9 @@ android/build
 key.properties
 *.jks
 *.keystore
+*.pem
+AFPFRA
+
+
 
 
