@@ -1,6 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { Capacitor } from '@capacitor/core';
-import { Geolocation } from '@capacitor/geolocation';
 
 const TARGET_MILES = 2.0;
 
@@ -35,7 +33,7 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
   const [elapsed, setElapsed]   = useState(0);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const watchIdRef      = useRef<string | null>(null);
+  const watchIdRef      = useRef<number | null>(null);
   const timerRef        = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef    = useRef(0);
   const timerStartedRef = useRef(false);
@@ -46,9 +44,9 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
   onCompleteRef.current = onComplete;
 
   // Always-fresh position handler — avoids stale closure in watchPosition callback
-  const posHandlerRef = useRef<(pos: any) => void>(() => {});
+  const posHandlerRef = useRef<(pos: GeolocationPosition) => void>(() => {});
 
-  posHandlerRef.current = (pos: any) => {
+  posHandlerRef.current = (pos: GeolocationPosition) => {
     if (!activeRef.current) return;
     if (!pos || !pos.coords) return;
 
@@ -66,7 +64,7 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
       }, 1000);
     }
 
-    // Skip low-accuracy readings (if accuracy is available and > 35m)
+    // Skip low-accuracy readings (> 35 meters)
     if (typeof accuracy === 'number' && accuracy > 35) return;
 
     if (lastPosRef.current) {
@@ -100,7 +98,7 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
     if (watchIdRef.current !== null) {
       try {
         if (typeof navigator !== 'undefined' && navigator.geolocation) {
-          navigator.geolocation.clearWatch(Number(watchIdRef.current));
+          navigator.geolocation.clearWatch(watchIdRef.current);
         }
       } catch (e) {
         console.warn('Error clearing watch:', e);
@@ -113,26 +111,9 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
     }
   };
 
-  const start = async () => {
+  const start = () => {
     setErrorMsg(null);
     setStatus('acquiring');
-
-    // 1. Safely request native permissions if running in Capacitor Native
-    if (Capacitor.isNativePlatform()) {
-      try {
-        const perm = await Geolocation.checkPermissions();
-        if (perm.location !== 'granted') {
-          const req = await Geolocation.requestPermissions();
-          if (req.location !== 'granted') {
-            setErrorMsg('Location permission denied. Please allow location in your device settings.');
-            setStatus('error');
-            return;
-          }
-        }
-      } catch (e) {
-        console.warn('Native permission check exception caught:', e);
-      }
-    }
 
     cleanup();
     activeRef.current       = true;
@@ -143,7 +124,6 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
     setDistance(0);
     setElapsed(0);
 
-    // 2. Start position watch using robust, crash-free geolocation
     if (typeof navigator === 'undefined' || !navigator.geolocation) {
       setErrorMsg('Geolocation is not supported on this device.');
       setStatus('error');
@@ -164,9 +144,9 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
         (err) => {
           console.error('GPS watch error:', err);
           if (err.code === 1) { // PERMISSION_DENIED
-            setErrorMsg('Location permission denied. Please allow location access in device settings.');
+            setErrorMsg('Location permission denied. Please allow location access in your device settings.');
           } else if (err.code === 2) { // POSITION_UNAVAILABLE
-            setErrorMsg('GPS signal unavailable. Please ensure GPS/Location is enabled.');
+            setErrorMsg('GPS location unavailable. Please ensure GPS/Location is enabled.');
           } else if (err.code === 3) { // TIMEOUT
             setErrorMsg('GPS timed out searching for satellite signal. Please move outdoors.');
           } else {
@@ -181,7 +161,7 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
           maximumAge: 1000,
         }
       );
-      watchIdRef.current = String(watchId);
+      watchIdRef.current = watchId;
     } catch (err) {
       console.error('Failed to start GPS watch:', err);
       setErrorMsg('Unable to start GPS. Please verify location services are enabled.');
