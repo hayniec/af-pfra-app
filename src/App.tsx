@@ -481,11 +481,11 @@ function App() {
         )}
         <div className="score-breakdown">
           <div className={`component-score ${exemptions.whtr ? 'component-exempt' : ''}`}>
-            <span className="component-label">WHtR Score:</span>
+            <span className="component-label">Waist-to-Height Ratio (WHtR):</span>
             <span className="component-value">{exemptions.whtr ? 'Exempt' : `${whtrScore.toFixed(1)} / 20`}</span>
           </div>
           <div className={`component-score ${exemptions.cardio ? 'component-exempt' : ''}`}>
-            <span className="component-label">Cardio Score:</span>
+            <span className="component-label">Cardio ({CARDIO_OPTIONS.find(o => o.value === cardioType)?.label ?? 'Run'}):</span>
             <span className="component-value">
               {exemptions.cardio
                 ? 'Exempt'
@@ -495,11 +495,11 @@ function App() {
             </span>
           </div>
           <div className={`component-score ${exemptions.strength ? 'component-exempt' : ''}`}>
-            <span className="component-label">Strength Score:</span>
+            <span className="component-label">Strength ({STRENGTH_OPTIONS.find(o => o.value === strengthType)?.label ?? 'Push-ups'}):</span>
             <span className="component-value">{exemptions.strength ? 'Exempt' : `${strengthScore.toFixed(1)} / 15`}</span>
           </div>
           <div className={`component-score ${exemptions.core ? 'component-exempt' : ''}`}>
-            <span className="component-label">Core Score:</span>
+            <span className="component-label">Core ({CORE_OPTIONS.find(o => o.value === coreType)?.label ?? 'Core'}):</span>
             <span className="component-value">{exemptions.core ? 'Exempt' : `${coreScore.toFixed(1)} / 15`}</span>
           </div>
         </div>

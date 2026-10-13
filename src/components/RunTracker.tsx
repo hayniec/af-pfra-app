@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { Geolocation } from '@capacitor/geolocation';
 
 const TARGET_MILES = 2.0;
@@ -49,8 +50,10 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
 
   posHandlerRef.current = (pos: any) => {
     if (!activeRef.current) return;
+    if (!pos || !pos.coords) return;
 
     const { latitude: lat, longitude: lon, accuracy } = pos.coords;
+    if (typeof lat !== 'number' || typeof lon !== 'number') return;
     const now = Date.now();
 
     // First valid position starts the timer
@@ -63,8 +66,8 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
       }, 1000);
     }
 
-    // Skip low-accuracy readings
-    if (accuracy > 30) return;
+    // Skip low-accuracy readings (if accuracy is available and > 35m)
+    if (typeof accuracy === 'number' && accuracy > 35) return;
 
     if (lastPosRef.current) {
       const dist = haversine(lastPosRef.current.lat, lastPosRef.current.lon, lat, lon);
@@ -95,7 +98,13 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
 
   const cleanup = () => {
     if (watchIdRef.current !== null) {
-      Geolocation.clearWatch({ id: watchIdRef.current });
+      try {
+        if (typeof navigator !== 'undefined' && navigator.geolocation) {
+          navigator.geolocation.clearWatch(Number(watchIdRef.current));
+        }
+      } catch (e) {
+        console.warn('Error clearing watch:', e);
+      }
       watchIdRef.current = null;
     }
     if (timerRef.current !== null) {
@@ -105,18 +114,24 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
   };
 
   const start = async () => {
-    try {
-      const perm = await Geolocation.checkPermissions();
-      if (perm.location !== 'granted') {
-        const req = await Geolocation.requestPermissions();
-        if (req.location !== 'granted') {
-          setErrorMsg('Location permission denied. Please enable GPS in your device settings.');
-          setStatus('error');
-          return;
+    setErrorMsg(null);
+    setStatus('acquiring');
+
+    // 1. Safely request native permissions if running in Capacitor Native
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const perm = await Geolocation.checkPermissions();
+        if (perm.location !== 'granted') {
+          const req = await Geolocation.requestPermissions();
+          if (req.location !== 'granted') {
+            setErrorMsg('Location permission denied. Please allow location in your device settings.');
+            setStatus('error');
+            return;
+          }
         }
+      } catch (e) {
+        console.warn('Native permission check exception caught:', e);
       }
-    } catch (e) {
-      console.error('Permission check failed', e);
     }
 
     cleanup();
@@ -127,19 +142,49 @@ export function RunTracker({ onComplete }: { onComplete: (seconds: number) => vo
     startTimeRef.current    = 0;
     setDistance(0);
     setElapsed(0);
-    setErrorMsg(null);
-    setStatus('acquiring');
+
+    // 2. Start position watch using robust, crash-free geolocation
+    if (typeof navigator === 'undefined' || !navigator.geolocation) {
+      setErrorMsg('Geolocation is not supported on this device.');
+      setStatus('error');
+      return;
+    }
 
     try {
-      const watchId = await Geolocation.watchPosition(
-        { enableHighAccuracy: true, timeout: 15000 },
+      const watchId = navigator.geolocation.watchPosition(
         (pos) => {
-          if (pos) posHandlerRef.current(pos);
+          try {
+            if (pos && pos.coords) {
+              posHandlerRef.current(pos);
+            }
+          } catch (err) {
+            console.error('Error in position callback:', err);
+          }
+        },
+        (err) => {
+          console.error('GPS watch error:', err);
+          if (err.code === 1) { // PERMISSION_DENIED
+            setErrorMsg('Location permission denied. Please allow location access in device settings.');
+          } else if (err.code === 2) { // POSITION_UNAVAILABLE
+            setErrorMsg('GPS signal unavailable. Please ensure GPS/Location is enabled.');
+          } else if (err.code === 3) { // TIMEOUT
+            setErrorMsg('GPS timed out searching for satellite signal. Please move outdoors.');
+          } else {
+            setErrorMsg(err.message || 'Unable to track GPS run.');
+          }
+          setStatus('error');
+          cleanup();
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 20000,
+          maximumAge: 1000,
         }
       );
-      watchIdRef.current = watchId;
+      watchIdRef.current = String(watchId);
     } catch (err) {
-      setErrorMsg('Unable to start GPS. Try moving outside.');
+      console.error('Failed to start GPS watch:', err);
+      setErrorMsg('Unable to start GPS. Please verify location services are enabled.');
       setStatus('error');
       cleanup();
     }

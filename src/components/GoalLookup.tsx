@@ -179,19 +179,19 @@ export function GoalLookup({
         {/* WHtR */}
         {exemptions.whtr ? (
           <div className="goal-row">
-            <span className="goal-event">WHtR</span>
+            <span className="goal-event">Waist-to-Height</span>
             <span className="goal-val" style={{ color: 'var(--af-gold)' }}>EXEMPT</span>
             <span className="goal-pts">—</span>
           </div>
         ) : (
           <div className="goal-row goal-row-anchor">
             <span className="goal-event">
-              WHtR
-              <span className="goal-anchor-badge" style={{ padding: '0.1rem 0.2rem', marginLeft: '4px' }}>
+              Waist-to-Height
+              <span className="goal-anchor-badge" title="Anchored to current score" style={{ padding: '0.1rem 0.25rem', marginLeft: '6px' }}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="14"
-                  height="14"
+                  width="13"
+                  height="13"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
